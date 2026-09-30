@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#000000">
+<title>Poker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Poker">
+<style>
+:root{
+  --bg:#000;
+  --fg:#fff;
+  --dim:#8c8c8c;
+  --line:#2e2e2e;
+  --red:#ff5c5c;
+  --green:#3ddc84;
+  --yellow:#ffd23f;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:inherit;}
+[hidden]{display:none!important;}
+html,body{
+  height:100%;margin:0;background:var(--bg);color:var(--fg);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-user-select:none;user-select:none;
+  overscroll-behavior:none;touch-action:manipulation;
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
+button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
+.dim{color:var(--dim);}
+.c-facil{color:var(--green);}
+.c-medio{color:var(--yellow);}
+.c-dificil{color:var(--red);}
+.screen{height:100%;max-width:480px;margin:0 auto;padding:16px;display:flex;flex-direction:column;}
+
+/* Menu */
+#menu{justify-content:center;gap:32px;}
+.head{flex:none;}
+.head h1{margin:0 0 10px;font-size:46px;font-weight:300;letter-spacing:-.02em;}
+#custom .head h1{font-size:38px;}
+.head p{margin:0;color:var(--dim);font-size:16px;line-height:1.45;max-width:30ch;}
+.box{border:1px solid var(--fg);border-radius:6px;overflow:hidden;}
+.box>*+*{border-top:1px solid var(--line);}
+.box .row{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;}
+.box .row>button+button{border-left:1px solid var(--line);}
+.box button{padding:16px 8px;min-height:54px;}
+.box button:active{background:var(--fg);color:#000;}
+.box button:disabled{color:var(--dim);cursor:default;}
+.box button:disabled:active{background:none;color:var(--dim);}
+#tables{overflow-y:auto;min-height:0;flex:0 1 auto;scrollbar-width:thin;scrollbar-color:#444 #000;-webkit-overflow-scrolling:touch;}
+.opt{flex:none;display:flex;justify-content:space-between;align-items:center;width:100%;padding:14px 18px!important;text-align:left;}
+.ol,.or{display:flex;flex-direction:column;gap:3px;}
+.or{align-items:flex-end;}
+.on{font-size:20px;}
+.od{font-size:13px;}
+.ob{font-size:14px;color:var(--dim);}
+.op{font-size:12px;color:var(--dim);}
+.box button:active span{color:#000;}
+
+/* Personalizada */
+#custom{gap:16px;overflow-y:auto;}
+#custom>*{flex:none;}
+#custom>:first-child{margin-top:auto;}
+#custom>:last-child{margin-bottom:auto;}
+.field{display:flex;justify-content:space-between;align-items:center;gap:16px;width:100%;min-height:56px;padding:0 18px;font-size:18px;text-align:left;position:relative;}
+.box button.field{padding:0 18px;}
+.field input{flex:1;min-width:0;text-align:right;background:transparent;border:0;outline:none;color:var(--fg);font:inherit;font-size:20px;padding:0;-webkit-user-select:text;user-select:text;-moz-appearance:textfield;}
+.field input::placeholder{color:#555;}
+.field input::-webkit-inner-spin-button,.field input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.field:focus-within{outline:2px solid var(--fg);outline-offset:-4px;}
+.field.sel span{position:relative;pointer-events:none;}
+.field.sel select{position:absolute;inset:0;width:100%;height:100%;padding:0 18px;border:0;outline:none;background:transparent;color:var(--fg);font:inherit;font-size:18px;text-align:right;text-align-last:right;-webkit-appearance:none;appearance:none;cursor:pointer;}
+.field.sel select option,.field.sel select optgroup{background:#000;color:#fff;}
+.botlist>*+*{border-top:1px solid var(--line);}
+.err{min-height:20px;font-size:14px;color:var(--red);}
+.err.ok{color:var(--fg);}
+
+/* Jogo */
+#game{gap:12px;overflow-y:auto;}
+#game>*{flex:none;}
+.top{display:flex;justify-content:space-between;align-items:center;font-size:15px;}
+.top .left{display:flex;gap:12px;align-items:baseline;}
+.top .link{padding:12px 16px 12px 0;}
+.opps{display:grid;grid-template-columns:repeat(var(--c,3),minmax(0,1fr));gap:8px;}
+.opp{min-width:0;border:1px solid var(--line);border-radius:6px;padding:8px;}
+.opp.turn,.opp.win,.me.win{border-color:var(--fg);}
+.opp.fold{opacity:.4;}
+.oname{font-size:14px;color:var(--dim);}
+.oper{font-size:11px;color:var(--dim);margin-top:1px;}
+.ostack{font-size:18px;margin-top:2px;}
+.ocards{display:flex;gap:3px;height:36px;margin-top:8px;}
+.olast{font-size:12px;color:var(--dim);margin-top:6px;min-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.opps.dense .opp{padding:6px 8px;}
+.opps.dense .ostack{font-size:16px;}
+.opps.dense .ocards{height:auto;margin-top:5px;}
+.opps.dense .olast{margin-top:4px;font-size:11px;}
+.opps.dense .card.sm{width:22px;}
+.opps.dense .card.sm b{font-size:10px;}
+.opps.dense .card.sm i{font-size:9px;}
+.dealer{display:inline-grid;place-items:center;width:16px;height:16px;border:1px solid var(--fg);border-radius:50%;font-size:10px;margin-left:6px;color:var(--fg);vertical-align:1px;}
+#game .center{flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;}
+.meta{display:flex;justify-content:space-between;width:100%;font-size:15px;color:var(--dim);}
+.meta #pot{color:var(--fg);}
+.board{display:flex;gap:6px;}
+.msg{min-height:22px;font-size:16px;text-align:center;}
+.me{border:1px solid var(--line);border-radius:6px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.me .mrow{display:flex;justify-content:space-between;align-items:baseline;width:100%;}
+.me .mrow .ostack{margin:0;}
+.mcards{display:flex;gap:10px;}
+.me.fold .mcards{opacity:.4;}
+.hn{min-height:18px;font-size:14px;color:var(--dim);}
+
+/* Cartas */
+.card{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--fg);border-radius:5px;aspect-ratio:5/7;line-height:1;}
+.card b{font-weight:500;}
+.card i{font-style:normal;}
+.card.red{color:var(--red);}
+.card.back{border-color:#444;}
+.card.empty{border:1px dashed #333;}
+.card.sm{width:26px;}.card.sm b{font-size:12px;}.card.sm i{font-size:10px;}
+.card.md{width:min(54px,15vw);}.card.md b{font-size:20px;}.card.md i{font-size:18px;margin-top:3px;}
+.card.lg{width:64px;}.card.lg b{font-size:28px;}.card.lg i{font-size:24px;margin-top:4px;}
+
+/* Ações */
+.actions{margin-top:0;}
+.note{padding:18px 16px;text-align:center;color:var(--dim);font-size:15px;}
+.rz{padding:12px 16px 4px;}
+.rz-top{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;}
+.rz-top strong{font-size:26px;font-weight:400;}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;margin:0;background:transparent;}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--fg);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--fg);margin-top:-11px;border:0;}
+input[type=range]::-moz-range-track{height:1px;background:var(--fg);}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--fg);border:0;}
+input[type=range]:disabled{opacity:.3;}
+@media (max-height:700px){
+  .card.lg{width:54px;}
+  .card.md{width:min(46px,13vw);}
+  #game{gap:8px;}
+  #game .center{gap:8px;}
+  .me{padding:8px;gap:6px;}
+  .top .link{padding:8px 16px 8px 0;}
+}
+</style>
+</head>
+<body>
+
+<section id="menu" class="screen">
+  <div class="head">
+    <h1>Poker</h1>
+    <p>Texas hold'em contra adversários com personalidades diferentes. Funciona sem internet e sem fichas para comprar.</p>
+  </div>
+  <div class="box" id="tables"></div>
+</section>
+
+<section id="custom" class="screen" hidden>
+  <div class="head">
+    <h1>Personalizada</h1>
+    <p>Monte a sua mesa ou parta de uma predefinição.</p>
+  </div>
+  <div class="box">
+    <label class="field sel"><span>Predefinição</span><select id="cPreset" aria-label="Predefinição"></select></label>
+    <label class="field"><span>Fichas</span><input id="cChips" type="number" inputmode="numeric" min="20" value="1000" aria-label="Quantidade de fichas"></label>
+    <button class="field" data-a="cprop"><span>Blind proporcional</span><span id="cPropV">Ligado</span></button>
+    <div class="field" id="cInfo"><span class="dim">Blinds</span><span id="cInfoV"></span></div>
+    <label class="field" id="cSBrow" hidden><span>Small blind</span><input id="cSB" type="number" inputmode="numeric" min="1" aria-label="Small blind"></label>
+    <label class="field" id="cBBrow" hidden><span>Big blind</span><input id="cBB" type="number" inputmode="numeric" min="1" aria-label="Big blind"></label>
+  </div>
+  <div class="box">
+    <label class="field sel"><span>Jogadores</span><select id="cPlayers" aria-label="Número de jogadores"></select></label>
+    <label class="field sel"><span>Dificuldade</span><select id="cDiff" aria-label="Dificuldade"></select></label>
+    <div class="botlist" id="cBots"></div>
+  </div>
+  <div class="box">
+    <label class="field"><span>Nome</span><input id="cName" type="text" maxlength="20" placeholder="Meu preset" autocomplete="off" aria-label="Nome do preset"></label>
+    <div class="row"><button data-a="csave">Salvar preset</button><button data-a="cdel" id="cDel" hidden>Excluir preset</button></div>
+  </div>
+  <div id="cErr" class="err" role="alert"></div>
+  <div class="box"><div class="row"><button data-a="cback">Voltar</button><button data-a="cplay">Jogar</button></div></div>
+</section>
+
+<section id="game" class="screen" hidden>
+  <div class="top">
+    <button class="link" data-a="exit">Sair</button>
+    <div class="left" id="tinfo"></div>
+  </div>
+  <div id="opps" class="opps"></div>
+  <div class="center">
+    <div class="meta"><span id="phase"></span><span id="pot"></span></div>
+    <div id="board" class="board"></div>
+    <div id="msg" class="msg"></div>
+  </div>
+  <div id="me" class="me"></div>
+  <div id="actions" class="box actions"></div>
+</section>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  /* ---------- Cartas e avaliação de mãos ---------- */
+  const RANK = {11:'J',12:'Q',13:'K',14:'A'};
+  const rk = r => RANK[r] || String(r);
+  const SUIT = ['\u2660\uFE0E','\u2665\uFE0E','\u2666\uFE0E','\u2663\uFE0E'];
+  const CAT = ['Carta alta','Par','Dois pares','Trinca','Sequência','Flush','Full house','Quadra','Straight flush'];
+  const P5 = 15 ** 5;
+
+  function combos(n, k){
+    const res = [];
+    (function rec(s, cur){
+      if (cur.length === k){ res.push(cur.slice()); return; }
+      for (let i = s; i < n; i++){ cur.push(i); rec(i + 1, cur); cur.pop(); }
+    })(0, []);
+    return res;
+  }
+  const COMB = {5: combos(5,5), 6: combos(6,5), 7: combos(7,5)};
+
+  function score5(c){
+    const rs = c.map(x => x.r).sort((a,b) => b - a);
+    const flush = c.every(x => x.s === c[0].s);
+    const uniq = new Set(rs);
+    let straight = 0;
+    if (uniq.size === 5){
+      if (rs[0] - rs[4] === 4) straight = rs[0];
+      else if (rs[0] === 14 && rs[1] === 5) straight = 5;
+    }
+    const cnt = {};
+    rs.forEach(r => cnt[r] = (cnt[r] || 0) + 1);
+    const g = Object.entries(cnt).map(([r,n]) => [+r, n]).sort((a,b) => b[1] - a[1] || b[0] - a[0]);
+    let cat, ks;
+    if (straight && flush){ cat = 8; ks = [straight]; }
+    else if (g[0][1] === 4){ cat = 7; ks = [g[0][0], g[1][0]]; }
+    else if (g[0][1] === 3 && g[1][1] === 2){ cat = 6; ks = [g[0][0], g[1][0]]; }
+    else if (flush){ cat = 5; ks = rs; }
+    else if (straight){ cat = 4; ks = [straight]; }
+    else if (g[0][1] === 3){ cat = 3; ks = g.map(x => x[0]); }
+    else if (g[0][1] === 2 && g[1][1] === 2){ cat = 2; ks = g.map(x => x[0]); }
+    else if (g[0][1] === 2){ cat = 1; ks = g.map(x => x[0]); }
+    else { cat = 0; ks = rs; }
+    let v = cat;
+    for (let i = 0; i < 5; i++) v = v * 15 + (ks[i] || 0);
+    return v;
+  }
+  function best7(cs){
+    let best = -1;
+    for (const idx of COMB[cs.length]){
+      const v = score5(idx.map(i => cs[i]));
+      if (v > best) best = v;
+    }
+    return best;
+  }
+  function catName(v){
+    const cat = Math.floor(v / P5);
+    if (cat === 8 && Math.floor(v / 15 ** 4) % 15 === 14) return 'Royal flush';
+    return CAT[cat];
+  }
+
+  function makeDeck(){
+    const d = [];
+    for (let s = 0; s < 4; s++) for (let r = 2; r <= 14; r++) d.push({r, s});
+    return d;
+  }
+  function shuffle(a){
+    for (let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  /* Equidade aproximada por simulação (usada pelos adversários) */
+  function equity(hole, board, nOpp, sims){
+    const known = new Set(hole.concat(board).map(c => c.r * 4 + c.s));
+    const rest = [];
+    for (let s = 0; s < 4; s++) for (let r = 2; r <= 14; r++) if (!known.has(r * 4 + s)) rest.push({r, s});
+    const need = (5 - board.length) + 2 * nOpp;
+    let win = 0;
+    for (let k = 0; k < sims; k++){
+      for (let i = 0; i < need; i++){
+        const j = i + Math.floor(Math.random() * (rest.length - i));
+        [rest[i], rest[j]] = [rest[j], rest[i]];
+      }
+      let idx = 0;
+      const b = board.slice();
+      while (b.length < 5) b.push(rest[idx++]);
+      const mine = best7(hole.concat(b));
+      let lost = false, ties = 0;
+      for (let o = 0; o < nOpp; o++){
+        const sc = best7([rest[idx++], rest[idx++]].concat(b));
+        if (sc > mine){ lost = true; break; }
+        if (sc === mine) ties++;
+      }
+      if (!lost) win += 1 / (ties + 1);
+    }
+    return win / sims;
+  }
+
+  /* ---------- Configuração: personalidades, dificuldades e mesas ---------- */
+  const fmt = n => Number(n).toLocaleString('pt-BR');
+
+  /* sims: precisão do cálculo | noise: erro de avaliação | margin: exigência para pagar (negativo = paga demais)
+     aggr: vontade de aumentar | bluff: chance de blefar | size: tamanho das apostas (fração do pote)
+     misplay: chance de uma jogada aleatória | chase: paga com mão fraca "para ver" | fear: fração das fichas
+     que assusta (acima disso desiste sem mão forte) | adapt: quanto lê o que você mostrou
+     read: quanto percebe quem aumenta demais e passa a pagar mais contra essa pessoa */
+  const PERS = {
+    novato:        {label:'Novato',        sims:25,  noise:0.16, margin:-0.06, aggr:0.5,  bluff:0.05, size:[0.3,0.9], misplay:0.20, chase:0.45, fear:9,    adapt:0,   read:0},
+    intermediario: {label:'Intermediário', sims:90,  noise:0.07, margin:0.01,  aggr:0.9,  bluff:0.06, size:[0.4,0.8], misplay:0.06, chase:0.20, fear:9,    adapt:0.5, read:0.3},
+    profissional:  {label:'Profissional',  sims:220, noise:0.01, margin:0.04,  aggr:1.0,  bluff:0.05, size:[0.5,0.9], misplay:0,    chase:0,    fear:9,    adapt:1,   read:0.7},
+    enganador:     {label:'Enganador',     sims:40,  noise:0.12, margin:0,     aggr:0.8,  bluff:0.30, size:[0.4,0.9], misplay:0.05, chase:0.20, fear:9,    adapt:0.2, read:0.1},
+    medroso:       {label:'Medroso',       sims:70,  noise:0.06, margin:0.14,  aggr:0.25, bluff:0,    size:[0.3,0.5], misplay:0.02, chase:0.02, fear:0.10, adapt:0.3, read:0},
+    agressivo:     {label:'Agressivo',     sims:90,  noise:0.06, margin:0.01,  aggr:1.3,  bluff:0.12, size:[0.6,1.1], misplay:0.02, chase:0.20, fear:9,    adapt:0.3, read:0.3},
+    caotico:       {label:'Caótico',       chaos:true}
+  };
+  const PERS_IDS = Object.keys(PERS);
+  const BOT_NAMES = ['Ana','Bruno','Carla','Diego','Elisa','Fábio','Gabi'];
+
+  /* Chance (em %) de cada personalidade aparecer quando o adversário é "Automático". O Caótico só entra se você escolher. */
+  const DIFF = {
+    facil:   {label:'Fácil',   w:{novato:70, medroso:12, enganador:8,  intermediario:8,  agressivo:2,  profissional:0}},
+    medio:   {label:'Médio',   w:{novato:15, medroso:12, enganador:18, intermediario:30, agressivo:15, profissional:10}},
+    dificil: {label:'Difícil', w:{novato:2,  medroso:4,  enganador:9,  intermediario:20, agressivo:30, profissional:35}}
+  };
+  const DIFF_IDS = Object.keys(DIFF);
+  function pickPers(diff){
+    const w = DIFF[diff].w;
+    const ids = Object.keys(w);
+    let r = Math.random() * ids.reduce((a, k) => a + w[k], 0);
+    for (const k of ids){ r -= w[k]; if (r < 0) return k; }
+    return ids[0];
+  }
+
+  const mkT = (buy, sb, bb, players, diff) => ({buy, sb, bb, players, diff, bots:Array(players - 1).fill('auto')});
+  const TABLES = [
+    mkT(50,    1,   2,   4, 'facil'),
+    mkT(100,   1,   2,   4, 'facil'),
+    mkT(250,   2,   5,   4, 'facil'),
+    mkT(500,   5,   10,  6, 'medio'),
+    mkT(1000,  10,  20,  6, 'medio'),
+    mkT(2500,  25,  50,  6, 'medio'),
+    mkT(5000,  50,  100, 8, 'dificil'),
+    mkT(10000, 100, 200, 8, 'dificil'),
+    mkT(25000, 250, 500, 8, 'dificil')
+  ];
+  $('tables').innerHTML = TABLES.map((t, i) =>
+    `<button class="opt" data-a="table" data-i="${i}">
+      <span class="ol"><span class="on">Mesa ${fmt(t.buy)}</span><span class="od c-${t.diff}">${DIFF[t.diff].label}</span></span>
+      <span class="or"><span class="ob">Blinds ${fmt(t.sb)} / ${fmt(t.bb)}</span><span class="op">${t.players} jogadores</span></span>
+    </button>`
+  ).join('') + `<button class="opt" data-a="custom">
+      <span class="ol"><span class="on">Personalizada</span><span class="od dim">Você escolhe tudo</span></span>
+      <span class="or"><span class="ob">Presets</span><span class="op">2 a 8 jogadores</span></span>
+    </button>`;
+
+  /* ---------- Estado do jogo ---------- */
+  const PH = {preflop:'Pré-flop', flop:'Flop', turn:'Turn', river:'River'};
+  const ORDER = ['preflop','flop','turn','river'];
+  let G = null;
+  const ui = {raising:false, val:0, exiting:false};
+
+  const totalPot = () => G.players.reduce((a,p) => a + p.total, 0);
+  function commit(p, amt){
+    amt = Math.max(0, Math.min(amt, p.stack));
+    p.stack -= amt; p.bet += amt; p.total += amt;
+    if (p.stack === 0) p.allIn = true;
+  }
+  function later(fn, ms){
+    const g = G;
+    g.timer = setTimeout(() => { if (G === g) fn(); }, ms);
+  }
+  function show(name){
+    ['menu','custom','game'].forEach(n => { $(n).hidden = n !== name; });
+  }
+
+  function newGame(t){
+    if (G) clearTimeout(G.timer);
+    const n = t.players;
+    const bots = Array.from({length: n - 1}, (_, k) => {
+      const b = t.bots && t.bots[k];
+      return b && b !== 'auto' ? b : pickPers(t.diff);
+    });
+    const tt = Object.assign({}, t, {bots});
+    const mk = (name, human, pers) => ({name, human, pers, stack:t.buy, bet:0, total:0, folded:false, allIn:false, acted:false, cards:[], last:''});
+    G = {
+      t:tt,
+      players:[mk('Você', true, null), ...bots.map((b, k) => mk(BOT_NAMES[k], false, b))],
+      dealer:Math.floor(Math.random() * n),
+      board:[], phase:'preflop', currentBet:0, minRaise:t.bb, toAct:0,
+      ended:false, over:false, showdown:false, msg:'', won:null, timer:null,
+      image:0, lastAggr:-1,
+      stats:Array.from({length:n}, () => ({h:0, r:0}))
+    };
+    ui.exiting = false;
+    show('game');
+    startHand();
+  }
+
+  function startHand(){
+    clearTimeout(G.timer);
+    const N = G.players.length;
+    G.dealer = (G.dealer + 1) % N;
+    G.board = []; G.phase = 'preflop'; G.ended = false; G.showdown = false; G.msg = ''; G.won = null;
+    G.image *= 0.85; G.lastAggr = -1;
+    G.stats.forEach(st => { st.h++; });
+    ui.raising = false;
+    G.deck = shuffle(makeDeck());
+    G.players.forEach(p => {
+      if (!p.human && p.stack <= 0) p.stack = G.t.buy;
+      p.bet = 0; p.total = 0; p.folded = false; p.allIn = false; p.acted = false; p.last = '';
+      p.show = false; p.aggr = false; p.registered = false; p.raised = false;
+      p.cards = [G.deck.pop(), G.deck.pop()];
+    });
+    const sb = N === 2 ? G.dealer : (G.dealer + 1) % N;
+    const bb = (sb + 1) % N;
+    [[sb, G.t.sb], [bb, G.t.bb]].forEach(([i, amt]) => {
+      const p = G.players[i];
+      commit(p, amt);
+      p.last = 'Blind ' + fmt(p.bet);
+    });
+    G.currentBet = Math.max(...G.players.map(p => p.bet));
+    G.minRaise = G.t.bb;
+    G.toAct = (bb + 1) % N;
+    render();
+    loop();
+  }
+
+  function nextToAct(start){
+    const N = G.players.length;
+    const can = G.players.filter(p => !p.folded && !p.allIn).length;
+    for (let k = 0; k < N; k++){
+      const i = (start + k) % N;
+      const p = G.players[i];
+      if (p.folded || p.allIn) continue;
+      if (p.bet < G.currentBet) return i;
+      if (can > 1 && !p.acted) return i;
+    }
+    return -1;
+  }
+
+  function loop(){
+    if (!G || G.ended) return;
+    clearTimeout(G.timer);
+    if (G.players.filter(p => !p.folded).length === 1) return finish();
+    const i = nextToAct(G.toAct);
+    if (i === -1) return advance();
+    G.toAct = i;
+    render();
+    if (G.players[i].human) return;
+    later(() => botAct(i), G.players[0].folded ? 250 : 600 + Math.random() * 500);
+  }
+
+  function next(i){
+    ui.raising = false;
+    G.toAct = (i + 1) % G.players.length;
+    loop();
+  }
+
+  function advance(){
+    G.players.forEach(p => { p.bet = 0; p.acted = false; if (!p.folded && !p.allIn) p.last = ''; });
+    G.currentBet = 0; G.minRaise = G.t.bb; G.lastAggr = -1;
+    if (G.phase === 'river') return showdown();
+    G.phase = ORDER[ORDER.indexOf(G.phase) + 1];
+    const n = G.phase === 'flop' ? 3 : 1;
+    for (let k = 0; k < n; k++) G.board.push(G.deck.pop());
+    G.toAct = (G.dealer + 1) % G.players.length;
+    const can = G.players.filter(p => !p.folded && !p.allIn).length;
+    render();
+    if (can < 2){ G.runout = true; later(advance, 1100); }
+    else { G.runout = false; loop(); }
+  }
+
+  /* ---------- Ações ---------- */
+  function doFold(i){
+    const p = G.players[i];
+    p.folded = true; p.acted = true; p.last = 'Desistiu';
+    next(i);
+  }
+  function doCall(i){
+    const p = G.players[i];
+    const amt = Math.min(G.currentBet - p.bet, p.stack);
+    commit(p, amt);
+    p.acted = true;
+    p.last = amt === 0 ? 'Passou' : (p.allIn ? 'All-in ' + fmt(p.bet) : 'Pagou ' + fmt(amt));
+    next(i);
+  }
+  function doRaise(i, to){
+    const p = G.players[i];
+    const wasBet = G.currentBet === 0;
+    to = Math.min(Math.round(to), p.bet + p.stack);
+    const raiseBy = to - G.currentBet;
+    commit(p, to - p.bet);
+    if (raiseBy >= G.minRaise){
+      G.minRaise = raiseBy;
+      G.players.forEach((q, j) => { if (j !== i && !q.folded && !q.allIn) q.acted = false; });
+    }
+    if (to > G.currentBet) G.currentBet = to;
+    p.acted = true;
+    G.lastAggr = i;
+    if (!p.raised){ p.raised = true; G.stats[i].r++; }
+    if (p.human) p.aggr = true;
+    p.last = p.allIn ? 'All-in ' + fmt(p.bet) : (wasBet ? 'Apostou ' + fmt(to) : 'Aumentou para ' + fmt(to));
+    next(i);
+  }
+
+  /* ---------- Adversários ---------- */
+  function chaosAct(i, canRaise, toCall, pot){
+    const p = G.players[i];
+    const r = Math.random();
+    if (toCall > 0 && r < 0.22) return doFold(i);
+    if (canRaise && r > 0.62){
+      let to;
+      if (Math.random() < 0.12) to = p.bet + p.stack;
+      else to = Math.min(G.currentBet + Math.max(G.minRaise, Math.round(pot * (0.2 + Math.random() * 1.3))), p.bet + p.stack);
+      return doRaise(i, to);
+    }
+    return doCall(i);
+  }
+
+  function botAct(i){
+    const p = G.players[i];
+    const P = PERS[p.pers];
+    const toCall = G.currentBet - p.bet;
+    const pot = totalPot();
+    const nOpp = G.players.filter((q, j) => j !== i && !q.folded).length;
+    const others = G.players.some((q, j) => j !== i && !q.folded && !q.allIn);
+    const canRaise = p.stack > toCall && others;
+    if (P.chaos || Math.random() < P.misplay) return chaosAct(i, canRaise, toCall, pot);
+
+    const sims = Math.max(20, Math.round(P.sims * Math.min(1, 5 / (nOpp + 1))));
+    let eq = equity(p.cards, G.board, nOpp, sims);
+    eq = Math.max(0, Math.min(1, eq + (Math.random() * 2 - 1) * P.noise));
+    const str = eq * (nOpp + 1);
+    const odds = toCall / (pot + toCall || 1);
+    const r = Math.random();
+    const vsHuman = (G.lastAggr === 0 && toCall > 0 ? G.image : 0) * P.adapt;
+    let exploit = 0;
+    const j = G.lastAggr;
+    if (P.read && j >= 0 && j !== i && toCall > 0){
+      const st = G.stats[j];
+      if (st.h >= 8) exploit = clamp((st.r / st.h - 0.3) * P.read * 1.5, 0, 0.14);
+    }
+    const sizeTo = frac => {
+      if (frac === undefined) frac = P.size[0] + Math.random() * (P.size[1] - P.size[0]);
+      const to = G.currentBet + Math.max(G.minRaise, Math.round((pot + toCall) * frac));
+      return Math.min(to, p.bet + p.stack);
+    };
+
+    if (toCall === 0){
+      if (canRaise && str > 1.7 && r < Math.min(0.95, 0.75 * P.aggr)) return doRaise(i, sizeTo());
+      if (canRaise && str > 1.25 && r < Math.min(0.9, 0.3 * P.aggr)) return doRaise(i, sizeTo(P.size[0]));
+      if (canRaise && Math.random() < P.bluff) return doRaise(i, sizeTo());
+      return doCall(i);
+    }
+    if (toCall / p.stack > P.fear && str < 2.2) return doFold(i);
+    const need = odds + 0.03 + P.margin - vsHuman * 0.06 - exploit;
+    if (eq > need){
+      if (canRaise && str > 1.9 && r < Math.min(0.9, 0.5 * P.aggr)) return doRaise(i, sizeTo());
+      if (canRaise && P.aggr > 1.2 && str > 1.3 && Math.random() < 0.35) return doRaise(i, sizeTo());
+      return doCall(i);
+    }
+    if (eq > odds * 0.8 && Math.random() < P.chase + vsHuman * 0.15 + exploit) return doCall(i);
+    if (canRaise && Math.random() < P.bluff * 0.5) return doRaise(i, sizeTo());
+    return doFold(i);
+  }
+
+  /* ---------- Fim de mão ---------- */
+  function endHand(msg, won){
+    G.ended = true; G.msg = msg; G.won = won; ui.raising = false;
+    if (G.players[0].stack <= 0) G.over = true;
+    render();
+  }
+
+  function finish(){
+    const w = G.players.findIndex(p => !p.folded);
+    const amt = totalPot();
+    G.players[w].stack += amt;
+    const won = G.players.map(() => 0); won[w] = amt;
+    G.showdown = false;
+    endHand((w === 0 ? 'Você ganhou ' : G.players[w].name + ' ganhou ') + fmt(amt), won);
+  }
+
+  /* Mostrar cartas revela a leitura do seu jogo: blefes vistos fazem os adversários pagarem mais */
+  function registerShow(){
+    const me = G.players[0];
+    if (me.registered) return;
+    me.registered = true;
+    if (!me.aggr) return;
+    let weak;
+    if (G.board.length >= 3) weak = Math.floor(best7(me.cards.concat(G.board)) / P5) <= 1;
+    else weak = me.cards[0].r !== me.cards[1].r && Math.max(me.cards[0].r, me.cards[1].r) < 11;
+    G.image = weak ? Math.min(1, G.image + 0.5) : Math.max(-1, G.image - 0.3);
+  }
+
+  function buildPots(){
+    const ps = G.players;
+    const levels = [...new Set(ps.filter(p => !p.folded && p.total > 0).map(p => p.total))].sort((a,b) => a - b);
+    const pots = [];
+    let prev = 0;
+    for (const lvl of levels){
+      let amount = 0;
+      ps.forEach(p => { amount += Math.min(p.total, lvl) - Math.min(p.total, prev); });
+      const eligible = [];
+      ps.forEach((p, i) => { if (!p.folded && p.total >= lvl) eligible.push(i); });
+      pots.push({amount, eligible});
+      prev = lvl;
+    }
+    const sum = ps.reduce((a, p) => a + p.total, 0);
+    const alloc = pots.reduce((a, p) => a + p.amount, 0);
+    if (pots.length && sum > alloc) pots[pots.length - 1].amount += sum - alloc;
+    return pots;
+  }
+
+  function showdown(){
+    const ps = G.players;
+    G.showdown = true;
+    ps.forEach(p => { if (!p.folded) p.eval = best7(p.cards.concat(G.board)); });
+    const won = ps.map(() => 0);
+    buildPots().forEach(pot => {
+      let best = -1;
+      pot.eligible.forEach(i => { best = Math.max(best, ps[i].eval); });
+      const w = pot.eligible.filter(i => ps[i].eval === best);
+      const share = Math.floor(pot.amount / w.length);
+      w.forEach(i => { won[i] += share; });
+      won[w[0]] += pot.amount - share * w.length;
+    });
+    won.forEach((v, i) => { ps[i].stack += v; });
+    ps.forEach((p, i) => {
+      if (p.folded) return;
+      p.show = won[i] > 0;
+      if (i > 0) p.last = p.show ? catName(p.eval) : 'Muck';
+    });
+    if (ps[0].show) registerShow();
+    const winners = won.map((v, i) => i).filter(i => won[i] > 0);
+    const nm = i => i === 0 ? 'Você' : ps[i].name;
+    let msg;
+    if (winners.length === 1){
+      const i = winners[0];
+      msg = (i === 0 ? 'Você ganhou ' : ps[i].name + ' ganhou ') + fmt(won[i]) + ' com ' + catName(ps[i].eval);
+    } else {
+      msg = 'Ganhos: ' + winners.map(i => nm(i) + ' +' + fmt(won[i])).join(', ');
+    }
+    endHand(msg, won);
+  }
+
+  /* ---------- Interface ---------- */
+  function cardHTML(c, size){
+    if (!c) return `<div class="card ${size} empty"></div>`;
+    if (c === 'b') return `<div class="card ${size} back"></div>`;
+    const red = (c.s === 1 || c.s === 2) ? ' red' : '';
+    return `<div class="card ${size}${red}"><b>${rk(c.r)}</b><i>${SUIT[c.s]}</i></div>`;
+  }
+
+  function raiseRange(){
+    const me = G.players[0];
+    const max = me.bet + me.stack;
+    let min = G.currentBet === 0 ? G.t.bb : G.currentBet + G.minRaise;
+    if (min > max) min = max;
+    return {min, max};
+  }
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  function render(){
+    if (!G) return;
+    const ps = G.players;
+    $('tinfo').innerHTML = `<span>Mesa ${fmt(G.t.buy)}</span><span class="c-${G.t.diff}">${DIFF[G.t.diff].label}</span><span class="dim">Blinds ${fmt(G.t.sb)} / ${fmt(G.t.bb)}</span>`;
+
+    const opps = ps.slice(1);
+    const dense = opps.length > 3;
+    const oel = $('opps');
+    oel.className = 'opps' + (dense ? ' dense' : '');
+    oel.style.setProperty('--c', dense ? Math.ceil(opps.length / 2) : opps.length);
+    oel.innerHTML = opps.map((p, k) => {
+      const i = k + 1;
+      const cls = ['opp'];
+      if (p.folded) cls.push('fold');
+      if (G.toAct === i && !G.ended) cls.push('turn');
+      if (G.ended && G.won && G.won[i] > 0) cls.push('win');
+      let cards = '';
+      if (G.showdown && !p.folded) cards = p.show ? p.cards.map(c => cardHTML(c, 'sm')).join('') : '';
+      else if (!p.folded && !dense) cards = cardHTML('b', 'sm') + cardHTML('b', 'sm');
+      const cardsRow = (cards || !dense) ? `<div class="ocards">${cards}</div>` : '';
+      return `<div class="${cls.join(' ')}">
+        <div class="oname">${p.name}${G.dealer === i ? '<span class="dealer">D</span>' : ''}</div>
+        <div class="oper">${PERS[p.pers].label}</div>
+        <div class="ostack">${fmt(p.stack)}</div>
+        ${cardsRow}
+        <div class="olast">${p.last || '&nbsp;'}</div>
+      </div>`;
+    }).join('');
+
+    $('phase').textContent = G.ended ? 'Mão encerrada' : PH[G.phase];
+    $('pot').textContent = G.ended ? '' : 'Pote ' + fmt(totalPot());
+    $('board').innerHTML = [0,1,2,3,4].map(i => cardHTML(G.board[i] || null, 'md')).join('');
+    $('msg').textContent = G.ended ? G.msg : '';
+
+    const me = ps[0];
+    const meEl = $('me');
+    meEl.className = 'me' + (me.folded ? ' fold' : '') + (G.ended && G.won && G.won[0] > 0 ? ' win' : '');
+    let hn = '';
+    if (G.board.length >= 3 && !me.folded) hn = catName(best7(me.cards.concat(G.board)));
+    else if (me.last && !G.ended) hn = me.last;
+    if (G.ended && !me.folded) hn = G.showdown ? (me.show ? 'Cartas mostradas' : 'Muck') : (me.show ? 'Cartas mostradas' : 'Cartas ocultas');
+    meEl.innerHTML = `
+      <div class="mrow"><div class="oname">Você${G.dealer === 0 ? '<span class="dealer">D</span>' : ''}</div><div class="ostack">${fmt(me.stack)}</div></div>
+      <div class="mcards">${me.cards.map(c => cardHTML(c, 'lg')).join('')}</div>
+      <div class="hn">${hn || '&nbsp;'}</div>`;
+
+    renderActions();
+  }
+
+  function renderActions(){
+    const el = $('actions');
+    const me = G.players[0];
+    if (ui.exiting && !G.over){
+      el.innerHTML = `<div class="note">Sair da mesa? As fichas desta partida serão perdidas.</div>
+        <div class="row"><button data-a="stay">Continuar jogando</button><button data-a="menu">Sair</button></div>`;
+      return;
+    }
+    if (G.over){
+      el.innerHTML = `<div class="note">Suas fichas acabaram.</div>
+        <div class="row"><button data-a="again">Jogar de novo</button><button data-a="menu">Trocar de mesa</button></div>`;
+      return;
+    }
+    if (G.ended){
+      const canShow = !me.folded && !me.show;
+      el.innerHTML = `<div class="row">${canShow ? '<button data-a="show">Mostrar cartas</button>' : ''}<button data-a="next">Próxima mão</button></div>`;
+      return;
+    }
+    if (G.toAct !== 0 || me.folded || me.allIn){
+      let t;
+      if (me.folded) t = 'Você desistiu. Aguarde o fim da mão.';
+      else if (me.allIn || G.runout) t = 'Distribuindo as cartas…';
+      else t = 'Vez de ' + G.players[G.toAct].name + '…';
+      el.innerHTML = `<div class="note">${t}</div>`;
+      return;
+    }
+    const toCall = G.currentBet - me.bet;
+    const others = G.players.some((p, j) => j !== 0 && !p.folded && !p.allIn);
+    const canRaise = me.stack > toCall && others;
+    const callLabel = toCall === 0 ? 'Passar' : (toCall >= me.stack ? `Pagar tudo (${fmt(me.stack)})` : `Pagar ${fmt(toCall)}`);
+
+    if (ui.raising && canRaise){
+      const {min, max} = raiseRange();
+      ui.val = clamp(ui.val, min, max);
+      el.innerHTML = `
+        <div class="rz">
+          <div class="rz-top"><span class="dim">${G.currentBet === 0 ? 'Apostar' : 'Aumentar para'}</span><strong id="rv">${fmt(ui.val)}</strong></div>
+          <input id="slider" type="range" min="${min}" max="${max}" step="${Math.max(1, Math.min(G.t.sb, max - min))}" value="${ui.val}" ${min === max ? 'disabled' : ''} aria-label="Valor">
+        </div>
+        <div class="row"><button data-a="pre" data-p="0.5">½ pote</button><button data-a="pre" data-p="1">Pote</button><button data-a="allin">All-in</button></div>
+        <div class="row"><button data-a="cancel">Voltar</button><button data-a="confirm">Confirmar</button></div>`;
+      return;
+    }
+    ui.raising = false;
+    el.innerHTML = `<div class="row">
+      ${toCall > 0 ? '<button data-a="fold">Desistir</button>' : ''}
+      <button data-a="call">${callLabel}</button>
+      ${canRaise ? `<button data-a="open">${G.currentBet === 0 ? 'Apostar' : 'Aumentar'}</button>` : ''}
+    </div>`;
+  }
+
+  /* ---------- Mesa personalizada e presets ---------- */
+  const cust = {prop:true, players:4, diff:'medio', bots:['auto','auto','auto'], preset:'manual'};
+  const STORE_KEY = 'poker.presets.v1';
+  let saved = [];
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+    if (Array.isArray(raw)) saved = raw.filter(p => p && typeof p.name === 'string' && p.buy >= 20 && p.players >= 2 && p.players <= 8 && DIFF[p.diff]);
+  } catch (e) { saved = []; }
+  function persist(){
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(saved)); return true; }
+    catch (e) { return false; }
+  }
+
+  function autoBlinds(chips){
+    const raw = chips * 0.02;
+    const step = raw >= 10 ? 10 ** Math.floor(Math.log10(raw)) : 1;
+    let bb = Math.max(2, Math.round(raw / step) * step);
+    bb -= bb % 2;
+    if (bb < 2) bb = 2;
+    return {sb: bb / 2, bb};
+  }
+  const readInt = id => { const v = parseInt($(id).value, 10); return Number.isFinite(v) ? v : NaN; };
+  const say = (m, ok) => { const e = $('cErr'); e.textContent = m; e.className = 'err' + (ok ? ' ok' : ''); };
+
+  function fitBots(){
+    while (cust.bots.length < cust.players - 1) cust.bots.push('auto');
+    cust.bots.length = cust.players - 1;
+  }
+
+  function initCustomControls(){
+    $('cPlayers').innerHTML = [2,3,4,5,6,7,8].map(n => `<option value="${n}">${n} jogadores</option>`).join('');
+    $('cDiff').innerHTML = DIFF_IDS.map(d => `<option value="${d}">${DIFF[d].label}</option>`).join('');
+  }
+  function rebuildPresets(){
+    const tOpts = TABLES.map((t, i) => `<option value="t${i}">Mesa ${fmt(t.buy)} (${DIFF[t.diff].label})</option>`).join('');
+    const sOpts = saved.map(p => `<option value="s:${esc(p.name)}">${esc(p.name)}</option>`).join('');
+    $('cPreset').innerHTML = `<option value="manual">Manual</option><optgroup label="Mesas">${tOpts}</optgroup>` +
+      (saved.length ? `<optgroup label="Salvas">${sOpts}</optgroup>` : '');
+    $('cPreset').value = cust.preset;
+  }
+  function refreshCustom(){
+    fitBots();
+    $('cPropV').textContent = cust.prop ? 'Ligado' : 'Desligado';
+    $('cPropV').className = cust.prop ? '' : 'dim';
+    $('cInfo').hidden = !cust.prop;
+    $('cSBrow').hidden = cust.prop;
+    $('cBBrow').hidden = cust.prop;
+    if (cust.prop){
+      const c = readInt('cChips');
+      if (c >= 1){ const b = autoBlinds(c); $('cInfoV').textContent = fmt(b.sb) + ' / ' + fmt(b.bb); }
+      else $('cInfoV').textContent = '—';
+    }
+    $('cPlayers').value = String(cust.players);
+    $('cDiff').value = cust.diff;
+    $('cDiff').style.color = 'var(--' + (cust.diff === 'facil' ? 'green' : cust.diff === 'medio' ? 'yellow' : 'red') + ')';
+    const opts = ['auto'].concat(PERS_IDS);
+    $('cBots').innerHTML = cust.bots.map((b, k) =>
+      `<label class="field sel"><span>Adversário ${k + 1}</span><select data-bot="${k}" aria-label="Adversário ${k + 1}">` +
+      opts.map(o => `<option value="${o}"${o === b ? ' selected' : ''}>${o === 'auto' ? 'Automático' : PERS[o].label}</option>`).join('') +
+      `</select></label>`
+    ).join('');
+    $('cDel').hidden = cust.preset.slice(0, 2) !== 's:';
+  }
+  function loadInto(src){
+    $('cChips').value = src.buy;
+    cust.prop = !!src.prop;
+    $('cSB').value = src.sb; $('cBB').value = src.bb;
+    cust.players = src.players; cust.diff = src.diff;
+    cust.bots = (src.bots || []).slice();
+    fitBots();
+  }
+  function onPreset(v){
+    cust.preset = v;
+    if (v === 'manual'){ $('cName').value = ''; return refreshCustom(); }
+    const src = v[0] === 't' ? TABLES[+v.slice(1)] : saved.find(p => p.name === v.slice(2));
+    if (!src){ cust.preset = 'manual'; return refreshCustom(); }
+    loadInto(src);
+    $('cName').value = v[0] === 's' ? src.name : '';
+    say('');
+    refreshCustom();
+  }
+
+  function readCustom(){
+    const chips = readInt('cChips');
+    if (!(chips >= 20)) return {err:'Informe pelo menos 20 fichas.'};
+    if (chips > 10000000) return {err:'O máximo é 10.000.000 de fichas.'};
+    let sb, bb;
+    if (cust.prop) ({sb, bb} = autoBlinds(chips));
+    else {
+      sb = readInt('cSB'); bb = readInt('cBB');
+      if (!(sb >= 1) || !(bb >= 1)) return {err:'Informe o small blind e o big blind.'};
+      if (bb < sb) return {err:'O big blind não pode ser menor que o small blind.'};
+    }
+    if (chips < bb * 5) return {err:'As fichas precisam ser pelo menos 5 vezes o big blind.'};
+    fitBots();
+    return {cfg:{buy:chips, sb, bb, players:cust.players, diff:cust.diff, bots:cust.bots.slice(), prop:cust.prop}};
+  }
+  function playCustom(){
+    const r = readCustom();
+    if (r.err) return say(r.err);
+    say('');
+    newGame(r.cfg);
+  }
+  function savePreset(){
+    const name = $('cName').value.trim();
+    if (!name) return say('Dê um nome ao preset.');
+    const r = readCustom();
+    if (r.err) return say(r.err);
+    const entry = Object.assign({name}, r.cfg);
+    const idx = saved.findIndex(p => p.name === name);
+    if (idx >= 0) saved[idx] = entry; else saved.push(entry);
+    cust.preset = 's:' + name;
+    const ok = persist();
+    rebuildPresets(); refreshCustom();
+    say(ok ? 'Preset "' + name + '" salvo.' : 'Preset salvo apenas nesta sessão (o navegador não permite guardar).', true);
+  }
+  function deletePreset(){
+    if (cust.preset.slice(0, 2) !== 's:') return;
+    const name = cust.preset.slice(2);
+    saved = saved.filter(p => p.name !== name);
+    persist();
+    cust.preset = 'manual';
+    $('cName').value = '';
+    rebuildPresets(); refreshCustom();
+    say('Preset "' + name + '" excluído.', true);
+  }
+
+  initCustomControls();
+  rebuildPresets();
+  refreshCustom();
+
+  /* ---------- Eventos ---------- */
+  document.addEventListener('input', e => {
+    const id = e.target.id;
+    if (id === 'slider'){
+      ui.val = +e.target.value;
+      $('rv').textContent = fmt(ui.val);
+    } else if (id === 'cChips'){
+      say(''); refreshCustom();
+    } else if (id === 'cSB' || id === 'cBB' || id === 'cName'){
+      say('');
+    }
+  });
+  document.addEventListener('change', e => {
+    const t = e.target;
+    if (t.id === 'cPreset') return onPreset(t.value);
+    if (t.id === 'cPlayers'){ cust.players = +t.value; say(''); return refreshCustom(); }
+    if (t.id === 'cDiff'){ cust.diff = t.value; return refreshCustom(); }
+    if (t.dataset && t.dataset.bot !== undefined){ cust.bots[+t.dataset.bot] = t.value; }
+  });
+
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-a]');
+    if (!b) return;
+    const a = b.dataset.a;
+
+    if (a === 'table') return newGame(TABLES[+b.dataset.i]);
+    if (a === 'custom'){ say(''); refreshCustom(); return show('custom'); }
+    if (a === 'cback') return show('menu');
+    if (a === 'cprop'){
+      cust.prop = !cust.prop;
+      if (!cust.prop){
+        const c = readInt('cChips');
+        if (c >= 1){ const bl = autoBlinds(c); $('cSB').value = bl.sb; $('cBB').value = bl.bb; }
+      }
+      say('');
+      return refreshCustom();
+    }
+    if (a === 'cplay') return playCustom();
+    if (a === 'csave') return savePreset();
+    if (a === 'cdel') return deletePreset();
+    if (a === 'menu'){
+      if (G) clearTimeout(G.timer);
+      G = null; ui.exiting = false; show('menu'); return;
+    }
+    if (!G) return;
+    if (a === 'exit'){ ui.exiting = true; return renderActions(); }
+    if (a === 'stay'){ ui.exiting = false; return renderActions(); }
+    if (a === 'again') return newGame(G.t);
+    if (a === 'next'){ if (G.ended && !G.over) startHand(); return; }
+    if (a === 'show'){
+      if (G.ended && !G.players[0].folded){ G.players[0].show = true; registerShow(); render(); }
+      return;
+    }
+
+    if (G.ended || G.toAct !== 0) return;
+    const me = G.players[0];
+    if (a === 'fold') return doFold(0);
+    if (a === 'call') return doCall(0);
+    if (a === 'open'){
+      ui.raising = true; ui.val = raiseRange().min; return renderActions();
+    }
+    if (a === 'cancel'){ ui.raising = false; return renderActions(); }
+    if (a === 'pre'){
+      const {min, max} = raiseRange();
+      const toCall = G.currentBet - me.bet;
+      ui.val = clamp(Math.round(G.currentBet + (totalPot() + toCall) * +b.dataset.p), min, max);
+      return renderActions();
+    }
+    if (a === 'allin'){ ui.val = raiseRange().max; return renderActions(); }
+    if (a === 'confirm'){
+      const {min, max} = raiseRange();
+      ui.raising = false;
+      return doRaise(0, clamp(ui.val, min, max));
+    }
+  });
+})();
+</script>
+<script>
+if (!window.Capacitor && 'serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+</script>
+</body>
+</html>
