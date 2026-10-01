@@ -47,7 +47,8 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 .screen{height:100%;max-width:480px;margin:0 auto;padding:16px;display:flex;flex-direction:column;}
 
 /* Menu */
-#menu{justify-content:center;gap:32px;}
+#menu,#win{justify-content:center;gap:24px;}
+#win .head h1{font-size:54px;}
 .head{flex:none;}
 .head h1{margin:0 0 10px;font-size:46px;font-weight:300;letter-spacing:-.02em;}
 #custom .head h1{font-size:38px;}
@@ -71,10 +72,19 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 .box button:active span{color:#000;}
 
 /* Personalizada */
-#custom{gap:16px;overflow-y:auto;}
-#custom>*{flex:none;}
-#custom>:first-child{margin-top:auto;}
-#custom>:last-child{margin-bottom:auto;}
+#custom,#stats,#ach,#opts{gap:16px;overflow-y:auto;}
+#custom>*,#stats>*,#ach>*,#opts>*{flex:none;}
+#custom>:first-child,#stats>:first-child,#ach>:first-child,#opts>:first-child{margin-top:auto;}
+#custom>:last-child,#stats>:last-child,#ach>:last-child,#opts>:last-child{margin-bottom:auto;}
+#stats .head h1,#ach .head h1,#opts .head h1{font-size:38px;margin:0;}
+.stat{min-height:48px;font-size:16px;}
+.al{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.an{font-size:17px;}
+.ad{font-size:12px;color:var(--dim);line-height:1.35;}
+.field.lock .an{color:var(--dim);}
+.as{font-size:13px;white-space:nowrap;}
+.small{font-size:13px;margin:0;}
+#winAch{margin-top:12px;}
 .field{display:flex;justify-content:space-between;align-items:center;gap:16px;width:100%;min-height:56px;padding:0 18px;font-size:18px;text-align:left;position:relative;}
 .box button.field{padding:0 18px;}
 .field input{flex:1;min-width:0;text-align:right;background:transparent;border:0;outline:none;color:var(--fg);font:inherit;font-size:20px;padding:0;-webkit-user-select:text;user-select:text;-moz-appearance:textfield;}
@@ -88,11 +98,14 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 .err{min-height:20px;font-size:14px;color:var(--red);}
 .err.ok{color:var(--fg);}
 
+.tr{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:13px;min-height:18px;}
+.tr.dim{display:block;text-align:center;}
+
 /* Jogo */
 #game{gap:12px;overflow-y:auto;}
 #game>*{flex:none;}
 .top{display:flex;justify-content:space-between;align-items:center;font-size:15px;}
-.top .left{display:flex;gap:12px;align-items:baseline;}
+.top .left{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;justify-content:flex-end;}
 .top .link{padding:12px 16px 12px 0;}
 .opps{display:grid;grid-template-columns:repeat(var(--c,3),minmax(0,1fr));gap:8px;}
 .opp{min-width:0;border:1px solid var(--line);border-radius:6px;padding:8px;}
@@ -115,7 +128,7 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 .meta{display:flex;justify-content:space-between;width:100%;font-size:15px;color:var(--dim);}
 .meta #pot{color:var(--fg);}
 .board{display:flex;gap:6px;}
-.msg{min-height:22px;font-size:16px;text-align:center;}
+.msg{min-height:22px;font-size:16px;text-align:center;white-space:pre-line;}
 .me{border:1px solid var(--line);border-radius:6px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:10px;}
 .me .mrow{display:flex;justify-content:space-between;align-items:baseline;width:100%;}
 .me .mrow .ostack{margin:0;}
@@ -164,6 +177,33 @@ input[type=range]:disabled{opacity:.3;}
     <p>Texas hold'em contra adversários com personalidades diferentes. Funciona sem internet e sem fichas para comprar.</p>
   </div>
   <div class="box" id="tables"></div>
+  <div class="box"><div class="row"><button data-a="stats">Estatísticas</button><button data-a="ach">Conquistas</button><button data-a="opts">Opções</button></div></div>
+</section>
+
+<section id="stats" class="screen" hidden>
+  <div class="head"><h1>Estatísticas</h1></div>
+  <div class="box" id="stBox"></div>
+  <div class="box" id="stDiff"></div>
+  <p class="small dim">Partidas abandonadas não entram na conta.</p>
+  <div class="box"><div class="row"><button data-a="mback">Voltar</button></div></div>
+</section>
+
+<section id="ach" class="screen" hidden>
+  <div class="head"><h1>Conquistas</h1></div>
+  <p id="achCount" class="small dim"></p>
+  <div class="box" id="achBox"></div>
+  <div class="box"><div class="row"><button data-a="mback">Voltar</button></div></div>
+</section>
+
+<section id="opts" class="screen" hidden>
+  <div class="head"><h1>Opções</h1></div>
+  <div class="box">
+    <button class="field" data-a="otrain"><span class="al"><span class="an">Modo treino</span><span class="ad">Mostra sua chance de ganhar e uma sugestão. Não dá conquistas.</span></span><span id="oTrain">Desligado</span></button>
+    <button class="field" data-a="ovib"><span class="al"><span class="an">Vibração</span><span class="ad">Vibra na sua vez e quando você ganha.</span></span><span id="oVib">Ligado</span></button>
+    <button class="field" data-a="oreset"><span class="al"><span class="an" id="oResetT">Zerar estatísticas e conquistas</span></span></button>
+  </div>
+  <p id="oVibNote" class="small dim"></p>
+  <div class="box"><div class="row"><button data-a="mback">Voltar</button></div></div>
 </section>
 
 <section id="custom" class="screen" hidden>
@@ -190,6 +230,15 @@ input[type=range]:disabled{opacity:.3;}
   </div>
   <div id="cErr" class="err" role="alert"></div>
   <div class="box"><div class="row"><button data-a="cback">Voltar</button><button data-a="cplay">Jogar</button></div></div>
+</section>
+
+<section id="win" class="screen" hidden>
+  <div class="head">
+    <h1>Vitória</h1>
+    <p id="winText"></p>
+    <p id="winAch" class="small"></p>
+  </div>
+  <div class="box"><div class="row"><button data-a="again">Jogar de novo</button><button data-a="menu">Voltar ao menu</button></div></div>
 </section>
 
 <section id="game" class="screen" hidden>
@@ -312,6 +361,133 @@ input[type=range]:disabled{opacity:.3;}
   /* ---------- Configuração: personalidades, dificuldades e mesas ---------- */
   const fmt = n => Number(n).toLocaleString('pt-BR');
 
+  /* ---------- Armazenamento local, opções, estatísticas e conquistas ---------- */
+  const LS = {
+    get(k, d){ try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } },
+    set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+    del(k){ try { localStorage.removeItem(k); } catch (e) {} }
+  };
+  const SETTINGS_KEY = 'poker.settings.v1', STATS_KEY = 'poker.stats.v1', SAVE_KEY = 'poker.save.v1';
+  const settings = Object.assign({practice:false, vibrate:true}, LS.get(SETTINGS_KEY, {}));
+  const defStats = () => ({games:0, wins:0, losses:0, chipsWon:0, chipsLost:0, hands:0, handsWon:0, biggest:0, bestVal:-1,
+    streak:0, bestStreak:0, byDiff:{facil:{g:0,w:0}, medio:{g:0,w:0}, dificil:{g:0,w:0}}, ach:{}});
+  let ST = Object.assign(defStats(), LS.get(STATS_KEY, {}));
+  ['facil','medio','dificil'].forEach(d => { ST.byDiff[d] = Object.assign({g:0, w:0}, (ST.byDiff || {})[d]); });
+  if (!ST.ach) ST.ach = {};
+
+  function vib(pattern){
+    if (!settings.vibrate || typeof navigator === 'undefined' || !navigator.vibrate) return;
+    try { navigator.vibrate(pattern); } catch (e) {}
+  }
+
+  /* hand: avaliada ao fim de cada mão | game: avaliada ao fim de uma partida concluída */
+  const ACH = [
+    {id:'first',    name:'Primeira vitória',    desc:'Vença uma partida.',                                  game:c => c.win},
+    {id:'ten',      name:'Dez vitórias',        desc:'Vença 10 partidas.',                                  game:c => c.win && ST.wins >= 10},
+    {id:'streak',   name:'Em sequência',        desc:'Vença 3 partidas seguidas.',                          game:c => c.win && ST.streak >= 3},
+    {id:'dfacil',   name:'Mesa Fácil dominada', desc:'Vença uma partida na dificuldade Fácil.',             game:c => c.win && c.diff === 'facil'},
+    {id:'dmedio',   name:'Mesa Média dominada', desc:'Vença uma partida na dificuldade Médio.',             game:c => c.win && c.diff === 'medio'},
+    {id:'ddificil', name:'Mesa Difícil dominada', desc:'Vença uma partida na dificuldade Difícil.',         game:c => c.win && c.diff === 'dificil'},
+    {id:'masters',  name:'Contra os mestres',   desc:'Vença com pelo menos 2 Profissionais na mesa.',       game:c => c.win && c.pros >= 2},
+    {id:'headsup',  name:'Cara a cara',         desc:'Vença uma partida de 2 jogadores.',                   game:c => c.win && c.startN === 2},
+    {id:'full8',    name:'Mesa cheia',          desc:'Vença uma partida com 8 jogadores.',                  game:c => c.win && c.startN === 8},
+    {id:'comeback', name:'Sobrevivente',        desc:'Vença depois de ficar com menos de 10% das fichas iniciais.', game:c => c.win && c.minStack < 0.1 * c.buy},
+    {id:'hands100', name:'Maratonista',         desc:'Jogue 100 mãos em partidas concluídas.',              game:c => ST.hands >= 100},
+    {id:'fullhouse',name:'Casa cheia',          desc:'Ganhe uma mão com Full house ou melhor.',             hand:c => c.won && c.showdown && c.cat >= 6},
+    {id:'quads',    name:'Quadra!',             desc:'Ganhe uma mão com Quadra ou melhor.',                 hand:c => c.won && c.showdown && c.cat >= 7},
+    {id:'sflush',   name:'Straight flush',      desc:'Ganhe uma mão com Straight flush.',                   hand:c => c.won && c.showdown && c.cat >= 8},
+    {id:'allin',    name:'Tudo ou nada',        desc:'Ganhe uma mão em que você estava all-in.',            hand:c => c.won && c.showdown && c.allIn},
+    {id:'bluff',    name:'Blefe perfeito',      desc:'Faça todos desistirem tendo só carta alta.',          hand:c => c.won && !c.showdown && c.bluff},
+    {id:'bigpot',   name:'Pote gigante',        desc:'Ganhe um pote de pelo menos o dobro das suas fichas iniciais.', hand:c => c.wonAmt >= 2 * c.buy}
+  ];
+  function unlockAch(kind, ctx){
+    const out = [];
+    ACH.forEach(a => {
+      if (a[kind] && !ST.ach[a.id] && a[kind](ctx)){ ST.ach[a.id] = Date.now(); out.push(a.name); }
+    });
+    if (out.length) LS.set(STATS_KEY, ST);
+    return out;
+  }
+
+  function loadSave(){
+    const sv = LS.get(SAVE_KEY, null);
+    return sv && sv.t && sv.gs && Array.isArray(sv.players) && sv.players.length > 1 ? sv : null;
+  }
+  function saveGame(){
+    if (!G) return;
+    if (G.over || G.victory){ LS.del(SAVE_KEY); return; }
+    LS.set(SAVE_KEY, Object.assign({}, G, {timer:null}));
+  }
+  function resumeGame(){
+    const sv = loadSave();
+    if (!sv) return;
+    G = sv; G.timer = null;
+    ui.raising = false; ui.exiting = false;
+    show('game');
+    render();
+    if (!G.ended) loop();
+  }
+
+  /* Modo treino: chance de ganhar e sugestão para a sua jogada */
+  function advise(){
+    const me = G.players[0];
+    const toCall = G.currentBet - me.bet;
+    const nOpp = G.players.filter((q, j) => j > 0 && !q.folded).length;
+    const key = [G.hands, G.phase, G.board.length, G.currentBet, me.bet, nOpp].join('|');
+    if (G.train && G.train.key === key) return G.train;
+    const sims = Math.max(120, Math.round(300 * Math.min(1, 5 / (nOpp + 1))));
+    const eq = equity(me.cards, G.board, nOpp, sims);
+    const odds = toCall / (totalPot() + toCall || 1);
+    const str = eq * (nOpp + 1);
+    let sug;
+    if (toCall === 0) sug = str > 1.7 ? 'Apostar' : 'Passar';
+    else if (eq > odds + 0.05) sug = str > 1.9 ? 'Aumentar' : (toCall >= me.stack ? 'Pagar tudo' : 'Pagar');
+    else sug = 'Desistir';
+    G.train = {key, eq, odds, toCall, sug};
+    return G.train;
+  }
+  function trainHTML(){
+    if (!G.practice) return '';
+    const me = G.players[0];
+    if (G.ended) return '<div class="tr">&nbsp;</div>';
+    if (me.folded || me.allIn || G.toAct !== 0) return '<div class="tr dim">Treino: aguarde a sua vez</div>';
+    const a = advise();
+    return `<div class="tr"><span>Chance ${Math.round(a.eq * 100)}%</span>${a.toCall > 0 ? `<span>Precisa ${Math.round(a.odds * 100)}%</span>` : '<span>Sem custo</span>'}<span>Sugestão: ${a.sug}</span></div>`;
+  }
+
+  function renderStats(){
+    const S = ST;
+    const rate = S.games ? Math.round(100 * S.wins / S.games) + '%' : '—';
+    const net = S.chipsWon - S.chipsLost;
+    const rows = [
+      ['Partidas jogadas', S.games], ['Vitórias', S.wins], ['Derrotas', S.losses], ['Taxa de vitória', rate],
+      ['Fichas ganhas', fmt(S.chipsWon)], ['Fichas perdidas', fmt(S.chipsLost)], ['Saldo de fichas', (net > 0 ? '+' : '') + fmt(net)],
+      ['Mãos jogadas', fmt(S.hands)], ['Mãos ganhas', fmt(S.handsWon)], ['Maior pote ganho', fmt(S.biggest)],
+      ['Melhor mão', S.bestVal >= 0 ? catName(S.bestVal) : '—'], ['Sequência de vitórias', S.streak], ['Melhor sequência', S.bestStreak]
+    ];
+    $('stBox').innerHTML = rows.map(r => `<div class="field stat"><span>${r[0]}</span><span>${r[1]}</span></div>`).join('');
+    $('stDiff').innerHTML = DIFF_IDS.map(d => {
+      const x = S.byDiff[d];
+      return `<div class="field stat"><span class="c-${d}">${DIFF[d].label}</span><span>${x.w} ${x.w === 1 ? 'vitória' : 'vitórias'} em ${x.g}</span></div>`;
+    }).join('');
+  }
+  function renderAch(){
+    const n = ACH.filter(a => ST.ach[a.id]).length;
+    $('achCount').textContent = n + ' de ' + ACH.length + ' conquistas';
+    $('achBox').innerHTML = ACH.map(a => {
+      const ok = !!ST.ach[a.id];
+      return `<div class="field ach${ok ? '' : ' lock'}"><span class="al"><span class="an">${a.name}</span><span class="ad">${a.desc}</span></span><span class="as${ok ? '' : ' dim'}">${ok ? 'Concluída' : 'Bloqueada'}</span></div>`;
+    }).join('');
+  }
+  function renderOpts(){
+    $('oTrain').textContent = settings.practice ? 'Ligado' : 'Desligado';
+    $('oTrain').className = settings.practice ? '' : 'dim';
+    $('oVib').textContent = settings.vibrate ? 'Ligado' : 'Desligado';
+    $('oVib').className = settings.vibrate ? '' : 'dim';
+    $('oResetT').textContent = ui.confirmReset ? 'Toque de novo para apagar tudo' : 'Zerar estatísticas e conquistas';
+    $('oVibNote').textContent = (typeof navigator !== 'undefined' && navigator.vibrate) ? '' : 'Este navegador não permite vibração (no iPhone não funciona).';
+  }
+
   /* sims: precisão do cálculo | noise: erro de avaliação | margin: exigência para pagar (negativo = paga demais)
      aggr: vontade de aumentar | bluff: chance de blefar | size: tamanho das apostas (fração do pote)
      misplay: chance de uma jogada aleatória | chase: paga com mão fraca "para ver" | fear: fração das fichas
@@ -356,21 +532,29 @@ input[type=range]:disabled{opacity:.3;}
     mkT(10000, 100, 200, 8, 'dificil'),
     mkT(25000, 250, 500, 8, 'dificil')
   ];
-  $('tables').innerHTML = TABLES.map((t, i) =>
-    `<button class="opt" data-a="table" data-i="${i}">
-      <span class="ol"><span class="on">Mesa ${fmt(t.buy)}</span><span class="od c-${t.diff}">${DIFF[t.diff].label}</span></span>
-      <span class="or"><span class="ob">Blinds ${fmt(t.sb)} / ${fmt(t.bb)}</span><span class="op">${t.players} jogadores</span></span>
-    </button>`
-  ).join('') + `<button class="opt" data-a="custom">
-      <span class="ol"><span class="on">Personalizada</span><span class="od dim">Você escolhe tudo</span></span>
-      <span class="or"><span class="ob">Presets</span><span class="op">2 a 8 jogadores</span></span>
-    </button>`;
+  function renderMenu(){
+    const sv = loadSave();
+    const cont = sv ? `<button class="opt" data-a="resume">
+      <span class="ol"><span class="on">Continuar partida</span><span class="od c-${sv.t.diff}">${DIFF[sv.t.diff].label}${sv.practice ? ' (treino)' : ''}</span></span>
+      <span class="or"><span class="ob">Mesa ${fmt(sv.t.buy)}, mão ${sv.hands}</span><span class="op">${sv.players.length} jogadores</span></span>
+    </button>` : '';
+    $('tables').innerHTML = cont + TABLES.map((t, i) =>
+      `<button class="opt" data-a="table" data-i="${i}">
+        <span class="ol"><span class="on">Mesa ${fmt(t.buy)}</span><span class="od c-${t.diff}">${DIFF[t.diff].label}</span></span>
+        <span class="or"><span class="ob">Blinds ${fmt(t.sb)} / ${fmt(t.bb)}</span><span class="op">${t.players} jogadores</span></span>
+      </button>`
+    ).join('') + `<button class="opt" data-a="custom">
+        <span class="ol"><span class="on">Personalizada</span><span class="od dim">Você escolhe tudo</span></span>
+        <span class="or"><span class="ob">Presets</span><span class="op">2 a 8 jogadores</span></span>
+      </button>`;
+  }
+  renderMenu();
 
   /* ---------- Estado do jogo ---------- */
   const PH = {preflop:'Pré-flop', flop:'Flop', turn:'Turn', river:'River'};
   const ORDER = ['preflop','flop','turn','river'];
   let G = null;
-  const ui = {raising:false, val:0, exiting:false};
+  const ui = {raising:false, val:0, exiting:false, confirmReset:false};
 
   const totalPot = () => G.players.reduce((a,p) => a + p.total, 0);
   function commit(p, amt){
@@ -383,7 +567,8 @@ input[type=range]:disabled{opacity:.3;}
     g.timer = setTimeout(() => { if (G === g) fn(); }, ms);
   }
   function show(name){
-    ['menu','custom','game'].forEach(n => { $(n).hidden = n !== name; });
+    ['menu','custom','win','game','stats','ach','opts'].forEach(n => { $(n).hidden = n !== name; });
+    if (name === 'menu') renderMenu();
   }
 
   function newGame(t){
@@ -401,7 +586,9 @@ input[type=range]:disabled{opacity:.3;}
       dealer:Math.floor(Math.random() * n),
       board:[], phase:'preflop', currentBet:0, minRaise:t.bb, toAct:0,
       ended:false, over:false, showdown:false, msg:'', won:null, timer:null,
-      image:0, lastAggr:-1,
+      image:0, lastAggr:-1, hands:0, victory:false,
+      practice:settings.practice, gs:{handsWon:0, biggest:0, bestVal:-1, minStack:t.buy},
+      startPros:bots.filter(b => b === 'profissional').length, startN:n, train:null, achNew:[],
       stats:Array.from({length:n}, () => ({h:0, r:0}))
     };
     ui.exiting = false;
@@ -411,6 +598,19 @@ input[type=range]:disabled{opacity:.3;}
 
   function startHand(){
     clearTimeout(G.timer);
+    G.hands++;
+    /* Adversários sem fichas saem da mesa; o dealer passa para o próximo jogador que ficou */
+    if (G.players.some(p => !p.human && p.stack <= 0)){
+      const N0 = G.players.length;
+      const keep = G.players.map(p => p.human || p.stack > 0);
+      const map = []; let c = 0;
+      keep.forEach((k, i) => { map[i] = k ? c++ : -1; });
+      let d = G.dealer;
+      while (map[d] < 0) d = (d - 1 + N0) % N0;
+      G.dealer = map[d];
+      G.players = G.players.filter((_, i) => keep[i]);
+      G.stats = G.stats.filter((_, i) => keep[i]);
+    }
     const N = G.players.length;
     G.dealer = (G.dealer + 1) % N;
     G.board = []; G.phase = 'preflop'; G.ended = false; G.showdown = false; G.msg = ''; G.won = null;
@@ -419,7 +619,6 @@ input[type=range]:disabled{opacity:.3;}
     ui.raising = false;
     G.deck = shuffle(makeDeck());
     G.players.forEach(p => {
-      if (!p.human && p.stack <= 0) p.stack = G.t.buy;
       p.bet = 0; p.total = 0; p.folded = false; p.allIn = false; p.acted = false; p.last = '';
       p.show = false; p.aggr = false; p.registered = false; p.raised = false;
       p.cards = [G.deck.pop(), G.deck.pop()];
@@ -459,7 +658,7 @@ input[type=range]:disabled{opacity:.3;}
     if (i === -1) return advance();
     G.toAct = i;
     render();
-    if (G.players[i].human) return;
+    if (G.players[i].human){ vib(40); return; }
     later(() => botAct(i), G.players[0].folded ? 250 : 600 + Math.random() * 500);
   }
 
@@ -578,10 +777,65 @@ input[type=range]:disabled{opacity:.3;}
   }
 
   /* ---------- Fim de mão ---------- */
+  function weakHand(){
+    const me = G.players[0];
+    if (G.board.length >= 3) return Math.floor(best7(me.cards.concat(G.board)) / P5) === 0;
+    return me.cards[0].r !== me.cards[1].r && Math.max(me.cards[0].r, me.cards[1].r) < 11;
+  }
+
+  /* Registra a partida concluída (vitória ou derrota). Partidas abandonadas nunca chegam aqui. */
+  function commitGame(win){
+    const gs = G.gs, buy = G.t.buy, final = G.players[0].stack;
+    ST.games++;
+    if (win){ ST.wins++; ST.streak++; ST.bestStreak = Math.max(ST.bestStreak, ST.streak); }
+    else { ST.losses++; ST.streak = 0; }
+    ST.chipsWon += Math.max(0, final - buy);
+    ST.chipsLost += Math.max(0, buy - final);
+    ST.hands += G.hands; ST.handsWon += gs.handsWon;
+    ST.biggest = Math.max(ST.biggest, gs.biggest);
+    if (gs.bestVal > ST.bestVal) ST.bestVal = gs.bestVal;
+    const d = ST.byDiff[G.t.diff]; d.g++; if (win) d.w++;
+    let names = [];
+    if (!G.practice) names = unlockAch('game', {win, diff:G.t.diff, pros:G.startPros, startN:G.startN, minStack:gs.minStack, buy});
+    LS.set(STATS_KEY, ST);
+    return names;
+  }
+
   function endHand(msg, won){
-    G.ended = true; G.msg = msg; G.won = won; ui.raising = false;
-    if (G.players[0].stack <= 0) G.over = true;
+    G.ended = true; G.won = won; ui.raising = false;
+    const me = G.players[0], gs = G.gs;
+    const gone = G.players.filter(p => !p.human && p.stack <= 0).map(p => p.name);
+    if (gone.length){
+      const list = gone.length < 2 ? gone[0] : gone.slice(0, -1).join(', ') + ' e ' + gone[gone.length - 1];
+      msg += '\n' + list + (gone.length > 1 ? ' saíram' : ' saiu') + ' da mesa.';
+    }
+    if (won[0] > 0){ gs.handsWon++; gs.biggest = Math.max(gs.biggest, won[0]); }
+    gs.minStack = Math.min(gs.minStack, me.stack);
+    let cat = -1;
+    if (G.showdown && !me.folded){ gs.bestVal = Math.max(gs.bestVal, me.eval); cat = Math.floor(me.eval / P5); }
+    let fresh = [];
+    if (!G.practice){
+      const bluff = !G.showdown && won[0] > 0 && me.aggr && weakHand();
+      fresh = unlockAch('hand', {won:won[0] > 0, wonAmt:won[0], showdown:G.showdown, cat, allIn:me.allIn, bluff, buy:G.t.buy});
+    }
+    if (me.stack <= 0) G.over = true;
+    else if (G.players.every(p => p.human || p.stack <= 0)) G.victory = true;
+    if (G.over || G.victory) fresh = fresh.concat(commitGame(G.victory));
+    fresh.forEach(n => { msg += '\nConquista desbloqueada: ' + n; });
+    G.achNew = G.achNew.concat(fresh);
+    G.msg = msg;
+    if (G.victory) vib([120, 60, 120, 60, 260]);
+    else if (G.over) vib(300);
+    else if (fresh.length) vib([40, 40, 40]);
+    else if (won[0] > 0) vib([70, 50, 70]);
     render();
+  }
+
+  function showWin(){
+    const n = G.t.players - 1, h = G.hands;
+    $('winText').textContent = `Você eliminou ${n} ${n === 1 ? 'adversário' : 'adversários'} da Mesa ${fmt(G.t.buy)} em ${h} ${h === 1 ? 'mão' : 'mãos'}.`;
+    $('winAch').textContent = G.achNew.length ? 'Conquistas desbloqueadas: ' + G.achNew.join(', ') + '.' : '';
+    show('win');
   }
 
   function finish(){
@@ -676,7 +930,7 @@ input[type=range]:disabled{opacity:.3;}
   function render(){
     if (!G) return;
     const ps = G.players;
-    $('tinfo').innerHTML = `<span>Mesa ${fmt(G.t.buy)}</span><span class="c-${G.t.diff}">${DIFF[G.t.diff].label}</span><span class="dim">Blinds ${fmt(G.t.sb)} / ${fmt(G.t.bb)}</span>`;
+    $('tinfo').innerHTML = `<span>Mesa ${fmt(G.t.buy)}</span><span class="c-${G.t.diff}">${DIFF[G.t.diff].label}</span><span class="dim">Blinds ${fmt(G.t.sb)} / ${fmt(G.t.bb)}</span>${G.practice ? '<span>Treino</span>' : ''}`;
 
     const opps = ps.slice(1);
     const dense = opps.length > 3;
@@ -717,22 +971,29 @@ input[type=range]:disabled{opacity:.3;}
     meEl.innerHTML = `
       <div class="mrow"><div class="oname">Você${G.dealer === 0 ? '<span class="dealer">D</span>' : ''}</div><div class="ostack">${fmt(me.stack)}</div></div>
       <div class="mcards">${me.cards.map(c => cardHTML(c, 'lg')).join('')}</div>
-      <div class="hn">${hn || '&nbsp;'}</div>`;
+      <div class="hn">${hn || '&nbsp;'}</div>
+      ${trainHTML()}`;
 
     renderActions();
+    saveGame();
   }
 
   function renderActions(){
     const el = $('actions');
     const me = G.players[0];
     if (ui.exiting && !G.over){
-      el.innerHTML = `<div class="note">Sair da mesa? As fichas desta partida serão perdidas.</div>
+      el.innerHTML = `<div class="note">Sair da mesa? A partida fica salva e você pode continuar depois pelo menu.</div>
         <div class="row"><button data-a="stay">Continuar jogando</button><button data-a="menu">Sair</button></div>`;
       return;
     }
     if (G.over){
       el.innerHTML = `<div class="note">Suas fichas acabaram.</div>
         <div class="row"><button data-a="again">Jogar de novo</button><button data-a="menu">Trocar de mesa</button></div>`;
+      return;
+    }
+    if (G.ended && G.victory){
+      el.innerHTML = `<div class="note">Todos os adversários foram eliminados.</div>
+        <div class="row"><button data-a="win">Continuar</button></div>`;
       return;
     }
     if (G.ended){
@@ -944,6 +1205,17 @@ input[type=range]:disabled{opacity:.3;}
     if (a === 'cplay') return playCustom();
     if (a === 'csave') return savePreset();
     if (a === 'cdel') return deletePreset();
+    if (a === 'stats'){ renderStats(); return show('stats'); }
+    if (a === 'ach'){ renderAch(); return show('ach'); }
+    if (a === 'opts'){ ui.confirmReset = false; renderOpts(); return show('opts'); }
+    if (a === 'mback'){ ui.confirmReset = false; return show('menu'); }
+    if (a === 'resume') return resumeGame();
+    if (a === 'otrain'){ settings.practice = !settings.practice; LS.set(SETTINGS_KEY, settings); return renderOpts(); }
+    if (a === 'ovib'){ settings.vibrate = !settings.vibrate; LS.set(SETTINGS_KEY, settings); renderOpts(); if (settings.vibrate) vib(40); return; }
+    if (a === 'oreset'){
+      if (!ui.confirmReset){ ui.confirmReset = true; return renderOpts(); }
+      ST = defStats(); LS.set(STATS_KEY, ST); ui.confirmReset = false; return renderOpts();
+    }
     if (a === 'menu'){
       if (G) clearTimeout(G.timer);
       G = null; ui.exiting = false; show('menu'); return;
@@ -952,6 +1224,7 @@ input[type=range]:disabled{opacity:.3;}
     if (a === 'exit'){ ui.exiting = true; return renderActions(); }
     if (a === 'stay'){ ui.exiting = false; return renderActions(); }
     if (a === 'again') return newGame(G.t);
+    if (a === 'win'){ if (G.victory) showWin(); return; }
     if (a === 'next'){ if (G.ended && !G.over) startHand(); return; }
     if (a === 'show'){
       if (G.ended && !G.players[0].folded){ G.players[0].show = true; registerShow(); render(); }
