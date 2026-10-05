@@ -112,7 +112,7 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 .opp.turn,.opp.win,.me.win{border-color:var(--fg);}
 .opp.fold{opacity:.4;}
 .oname{font-size:14px;color:var(--dim);}
-.oper{font-size:11px;color:var(--dim);margin-top:1px;}
+.oper{font-size:11px;color:var(--dim);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ostack{font-size:18px;margin-top:2px;}
 .ocards{display:flex;gap:3px;height:36px;margin-top:8px;}
 .olast{font-size:12px;color:var(--dim);margin-top:6px;min-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -135,6 +135,13 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 .mcards{display:flex;gap:10px;}
 .me.fold .mcards{opacity:.4;}
 .hn{min-height:18px;font-size:14px;color:var(--dim);}
+
+/* Animações simples */
+@keyframes deal{from{opacity:0;transform:translateY(-10px) scale(.92);}to{opacity:1;transform:none;}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.55);}100%{box-shadow:0 0 0 12px rgba(255,255,255,0);}}
+.card.new{animation:deal .28s ease-out both;}
+.opp.win,.me.win{animation:pulse .7s ease-out;}
+@media (prefers-reduced-motion:reduce){.card.new,.opp.win,.me.win{animation:none;}}
 
 /* Cartas */
 .card{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--fg);border-radius:5px;aspect-ratio:5/7;line-height:1;}
@@ -200,6 +207,7 @@ input[type=range]:disabled{opacity:.3;}
   <div class="box">
     <button class="field" data-a="otrain"><span class="al"><span class="an">Modo treino</span><span class="ad">Mostra sua chance de ganhar e uma sugestão. Não dá conquistas.</span></span><span id="oTrain">Desligado</span></button>
     <button class="field" data-a="ovib"><span class="al"><span class="an">Vibração</span><span class="ad">Vibra na sua vez e quando você ganha.</span></span><span id="oVib">Ligado</span></button>
+    <button class="field" data-a="osound"><span class="al"><span class="an">Sons</span><span class="ad">Cartas, fichas e avisos simples.</span></span><span id="oSound">Ligado</span></button>
     <button class="field" data-a="oreset"><span class="al"><span class="an" id="oResetT">Zerar estatísticas e conquistas</span></span></button>
   </div>
   <p id="oVibNote" class="small dim"></p>
@@ -218,6 +226,8 @@ input[type=range]:disabled{opacity:.3;}
     <div class="field" id="cInfo"><span class="dim">Blinds</span><span id="cInfoV"></span></div>
     <label class="field" id="cSBrow" hidden><span>Small blind</span><input id="cSB" type="number" inputmode="numeric" min="1" aria-label="Small blind"></label>
     <label class="field" id="cBBrow" hidden><span>Big blind</span><input id="cBB" type="number" inputmode="numeric" min="1" aria-label="Big blind"></label>
+    <button class="field" data-a="crise"><span>Blinds crescentes</span><span id="cRiseV">Ligado</span></button>
+    <label class="field sel" id="cEveryRow"><span>Subir a cada</span><select id="cEvery" aria-label="Subir os blinds a cada"></select></label>
   </div>
   <div class="box">
     <label class="field sel"><span>Jogadores</span><select id="cPlayers" aria-label="Número de jogadores"></select></label>
@@ -234,7 +244,7 @@ input[type=range]:disabled{opacity:.3;}
 
 <section id="win" class="screen" hidden>
   <div class="head">
-    <h1>Vitória</h1>
+    <h1 id="winTitle">Vitória</h1>
     <p id="winText"></p>
     <p id="winAch" class="small"></p>
   </div>
@@ -332,11 +342,12 @@ input[type=range]:disabled{opacity:.3;}
   }
 
   /* Equidade aproximada por simulação (usada pelos adversários) */
-  function equity(hole, board, nOpp, sims){
+  function equity(hole, board, nOpp, sims, peek){
     const known = new Set(hole.concat(board).map(c => c.r * 4 + c.s));
+    if (peek) known.add(peek.r * 4 + peek.s);
     const rest = [];
     for (let s = 0; s < 4; s++) for (let r = 2; r <= 14; r++) if (!known.has(r * 4 + s)) rest.push({r, s});
-    const need = (5 - board.length) + 2 * nOpp;
+    const need = (5 - board.length) + 2 * nOpp - (peek ? 1 : 0);
     let win = 0;
     for (let k = 0; k < sims; k++){
       for (let i = 0; i < need; i++){
@@ -349,7 +360,8 @@ input[type=range]:disabled{opacity:.3;}
       const mine = best7(hole.concat(b));
       let lost = false, ties = 0;
       for (let o = 0; o < nOpp; o++){
-        const sc = best7([rest[idx++], rest[idx++]].concat(b));
+        const oh = (peek && o === 0) ? [peek, rest[idx++]] : [rest[idx++], rest[idx++]];
+        const sc = best7(oh.concat(b));
         if (sc > mine){ lost = true; break; }
         if (sc === mine) ties++;
       }
@@ -368,9 +380,9 @@ input[type=range]:disabled{opacity:.3;}
     del(k){ try { localStorage.removeItem(k); } catch (e) {} }
   };
   const SETTINGS_KEY = 'poker.settings.v1', STATS_KEY = 'poker.stats.v1', SAVE_KEY = 'poker.save.v1';
-  const settings = Object.assign({practice:false, vibrate:true}, LS.get(SETTINGS_KEY, {}));
+  const settings = Object.assign({practice:false, vibrate:true, sound:true}, LS.get(SETTINGS_KEY, {}));
   const defStats = () => ({games:0, wins:0, losses:0, chipsWon:0, chipsLost:0, hands:0, handsWon:0, biggest:0, bestVal:-1,
-    streak:0, bestStreak:0, byDiff:{facil:{g:0,w:0}, medio:{g:0,w:0}, dificil:{g:0,w:0}}, ach:{}});
+    streak:0, bestStreak:0, byDiff:{facil:{g:0,w:0}, medio:{g:0,w:0}, dificil:{g:0,w:0}}, ach:{}, placeSum:0, placeGames:0});
   let ST = Object.assign(defStats(), LS.get(STATS_KEY, {}));
   ['facil','medio','dificil'].forEach(d => { ST.byDiff[d] = Object.assign({g:0, w:0}, (ST.byDiff || {})[d]); });
   if (!ST.ach) ST.ach = {};
@@ -378,6 +390,64 @@ input[type=range]:disabled{opacity:.3;}
   function vib(pattern){
     if (!settings.vibrate || typeof navigator === 'undefined' || !navigator.vibrate) return;
     try { navigator.vibrate(pattern); } catch (e) {}
+  }
+
+  /* ---------- Sons simples (gerados pelo próprio aparelho, sem arquivos) ---------- */
+  let AC = null;
+  function audio(){
+    try {
+      if (!AC){
+        const C = typeof window !== 'undefined' ? (window.AudioContext || window.webkitAudioContext) : null;
+        if (C) AC = new C();
+      }
+      if (AC && AC.state === 'suspended') AC.resume();
+    } catch (e) { AC = null; }
+    return AC;
+  }
+  function tone(freq, dur, o){
+    if (!settings.sound) return;
+    const ac = audio(); if (!ac) return;
+    o = o || {};
+    try {
+      const t = ac.currentTime + (o.at || 0);
+      const osc = ac.createOscillator(), g = ac.createGain();
+      osc.type = o.type || 'sine';
+      osc.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(o.vol || 0.1, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(g); g.connect(ac.destination);
+      osc.start(t); osc.stop(t + dur + 0.02);
+    } catch (e) {}
+  }
+  function noise(dur, vol){
+    if (!settings.sound) return;
+    const ac = audio(); if (!ac) return;
+    try {
+      const n = Math.floor(ac.sampleRate * dur);
+      const buf = ac.createBuffer(1, n, ac.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+      const src = ac.createBufferSource(), g = ac.createGain();
+      g.gain.value = vol; src.buffer = buf; src.connect(g); g.connect(ac.destination); src.start();
+    } catch (e) {}
+  }
+  const sfx = {
+    deal(){ noise(0.07, 0.12); },
+    chip(){ tone(1400, 0.05, {type:'triangle', vol:0.07}); tone(1000, 0.07, {type:'triangle', vol:0.06, at:0.04}); },
+    fold(){ tone(220, 0.09, {vol:0.07}); },
+    turn(){ tone(660, 0.09, {vol:0.08}); },
+    win(){ [523, 659, 784].forEach((f, k) => tone(f, 0.18, {vol:0.09, at:k * 0.09})); },
+    lose(){ [330, 262, 196].forEach((f, k) => tone(f, 0.25, {type:'triangle', vol:0.09, at:k * 0.14})); },
+    victory(){ [523, 659, 784, 1047].forEach((f, k) => tone(f, 0.28, {vol:0.11, at:k * 0.12})); },
+    ach(){ tone(988, 0.12, {vol:0.09}); tone(1319, 0.22, {vol:0.09, at:0.1}); },
+    blind(){ tone(440, 0.1, {type:'square', vol:0.04}); tone(440, 0.1, {type:'square', vol:0.04, at:0.14}); }
+  };
+
+  /* Próximo valor de blind: ×1,5 arredondado para um número "redondo" */
+  function niceBlind(x){
+    if (x < 10) return Math.max(2, Math.round(x));
+    const st = 5 * 10 ** (Math.floor(Math.log10(x)) - 1);
+    return Math.round(x / st) * st;
   }
 
   /* hand: avaliada ao fim de cada mão | game: avaliada ao fim de uma partida concluída */
@@ -411,7 +481,7 @@ input[type=range]:disabled{opacity:.3;}
 
   function loadSave(){
     const sv = LS.get(SAVE_KEY, null);
-    return sv && sv.t && sv.gs && Array.isArray(sv.players) && sv.players.length > 1 ? sv : null;
+    return sv && sv.ver === 2 && sv.t && sv.gs && Array.isArray(sv.players) && sv.players.length > 1 ? sv : null;
   }
   function saveGame(){
     if (!G) return;
@@ -463,7 +533,8 @@ input[type=range]:disabled{opacity:.3;}
       ['Partidas jogadas', S.games], ['Vitórias', S.wins], ['Derrotas', S.losses], ['Taxa de vitória', rate],
       ['Fichas ganhas', fmt(S.chipsWon)], ['Fichas perdidas', fmt(S.chipsLost)], ['Saldo de fichas', (net > 0 ? '+' : '') + fmt(net)],
       ['Mãos jogadas', fmt(S.hands)], ['Mãos ganhas', fmt(S.handsWon)], ['Maior pote ganho', fmt(S.biggest)],
-      ['Melhor mão', S.bestVal >= 0 ? catName(S.bestVal) : '—'], ['Sequência de vitórias', S.streak], ['Melhor sequência', S.bestStreak]
+      ['Melhor mão', S.bestVal >= 0 ? catName(S.bestVal) : '—'], ['Sequência de vitórias', S.streak], ['Melhor sequência', S.bestStreak],
+      ['Colocação média', S.placeGames ? (S.placeSum / S.placeGames).toFixed(1).replace('.', ',') + 'º' : '—']
     ];
     $('stBox').innerHTML = rows.map(r => `<div class="field stat"><span>${r[0]}</span><span>${r[1]}</span></div>`).join('');
     $('stDiff').innerHTML = DIFF_IDS.map(d => {
@@ -484,6 +555,8 @@ input[type=range]:disabled{opacity:.3;}
     $('oTrain').className = settings.practice ? '' : 'dim';
     $('oVib').textContent = settings.vibrate ? 'Ligado' : 'Desligado';
     $('oVib').className = settings.vibrate ? '' : 'dim';
+    $('oSound').textContent = settings.sound ? 'Ligado' : 'Desligado';
+    $('oSound').className = settings.sound ? '' : 'dim';
     $('oResetT').textContent = ui.confirmReset ? 'Toque de novo para apagar tudo' : 'Zerar estatísticas e conquistas';
     $('oVibNote').textContent = (typeof navigator !== 'undefined' && navigator.vibrate) ? '' : 'Este navegador não permite vibração (no iPhone não funciona).';
   }
@@ -500,6 +573,16 @@ input[type=range]:disabled{opacity:.3;}
     enganador:     {label:'Enganador',     sims:40,  noise:0.12, margin:0,     aggr:0.8,  bluff:0.30, size:[0.4,0.9], misplay:0.05, chase:0.20, fear:9,    adapt:0.2, read:0.1},
     medroso:       {label:'Medroso',       sims:70,  noise:0.06, margin:0.14,  aggr:0.25, bluff:0,    size:[0.3,0.5], misplay:0.02, chase:0.02, fear:0.10, adapt:0.3, read:0},
     agressivo:     {label:'Agressivo',     sims:90,  noise:0.06, margin:0.01,  aggr:1.3,  bluff:0.12, size:[0.6,1.1], misplay:0.02, chase:0.20, fear:9,    adapt:0.3, read:0.3},
+    /* copy: chance de imitar a jogada anterior (se fizer sentido) */
+    copiador:      {label:'Copiador',      sims:90,  noise:0.07, margin:0.01,  aggr:0.9,  bluff:0.06, size:[0.4,0.8], misplay:0.04, chase:0.20, fear:9,    adapt:0.3, read:0.2, copy:0.7},
+    /* usa os parâmetros do bot que está imitando (ver startHand) */
+    mimico:        {label:'Mímico',        sims:90,  noise:0.07, margin:0.01,  aggr:0.9,  bluff:0.06, size:[0.4,0.8], misplay:0.04, chase:0.20, fear:9,    adapt:0.3, read:0.2},
+    /* cheat: no começo da mão enxerga uma carta de um jogador */
+    trapaceiro:    {label:'Trapaceiro',    sims:120, noise:0.04, margin:0.02,  aggr:1.0,  bluff:0.05, size:[0.5,0.9], misplay:0.02, chase:0.10, fear:9,    adapt:0.5, read:0.4, cheat:true},
+    /* hunt: pressiona quem tem 30% ou menos das fichas iniciais */
+    cacador:       {label:'Caçador',       sims:90,  noise:0.07, margin:0.01,  aggr:0.9,  bluff:0.06, size:[0.4,0.8], misplay:0.06, chase:0.20, fear:9,    adapt:0.5, read:0.3, hunt:true},
+    /* revenge: pressiona por 5 mãos quem lhe tirou 25% das fichas iniciais ou mais numa mão */
+    vingativo:     {label:'Vingativo',     sims:90,  noise:0.07, margin:0.01,  aggr:0.9,  bluff:0.06, size:[0.4,0.8], misplay:0.06, chase:0.20, fear:9,    adapt:0.5, read:0.3, revenge:true},
     caotico:       {label:'Caótico',       chaos:true}
   };
   const PERS_IDS = Object.keys(PERS);
@@ -507,9 +590,9 @@ input[type=range]:disabled{opacity:.3;}
 
   /* Chance (em %) de cada personalidade aparecer quando o adversário é "Automático". O Caótico só entra se você escolher. */
   const DIFF = {
-    facil:   {label:'Fácil',   w:{novato:70, medroso:12, enganador:8,  intermediario:8,  agressivo:2,  profissional:0}},
-    medio:   {label:'Médio',   w:{novato:15, medroso:12, enganador:18, intermediario:30, agressivo:15, profissional:10}},
-    dificil: {label:'Difícil', w:{novato:2,  medroso:4,  enganador:9,  intermediario:20, agressivo:30, profissional:35}}
+    facil:   {label:'Fácil',   w:{novato:70, medroso:8,  enganador:4,  intermediario:4,  copiador:12, agressivo:2,  profissional:0,  mimico:0,  trapaceiro:0,  cacador:0,  vingativo:0}},
+    medio:   {label:'Médio',   w:{novato:15, medroso:8,  enganador:12, intermediario:14, copiador:12, agressivo:8,  profissional:5,  mimico:8,  trapaceiro:2,  cacador:8,  vingativo:8}},
+    dificil: {label:'Difícil', w:{novato:2,  medroso:2,  enganador:5,  intermediario:10, copiador:5,  agressivo:14, profissional:18, mimico:10, trapaceiro:10, cacador:12, vingativo:12}}
   };
   const DIFF_IDS = Object.keys(DIFF);
   function pickPers(diff){
@@ -520,7 +603,8 @@ input[type=range]:disabled{opacity:.3;}
     return ids[0];
   }
 
-  const mkT = (buy, sb, bb, players, diff) => ({buy, sb, bb, players, diff, bots:Array(players - 1).fill('auto')});
+  const EVERY = {facil:12, medio:10, dificil:8};
+  const mkT = (buy, sb, bb, players, diff) => ({buy, sb, bb, players, diff, rise:true, every:EVERY[diff], bots:Array(players - 1).fill('auto')});
   const TABLES = [
     mkT(50,    1,   2,   4, 'facil'),
     mkT(100,   1,   2,   4, 'facil'),
@@ -555,6 +639,7 @@ input[type=range]:disabled{opacity:.3;}
   const ORDER = ['preflop','flop','turn','river'];
   let G = null;
   const ui = {raising:false, val:0, exiting:false, confirmReset:false};
+  const anim = {board:0, hand:-1};
 
   const totalPot = () => G.players.reduce((a,p) => a + p.total, 0);
   function commit(p, amt){
@@ -578,7 +663,8 @@ input[type=range]:disabled{opacity:.3;}
       const b = t.bots && t.bots[k];
       return b && b !== 'auto' ? b : pickPers(t.diff);
     });
-    const tt = Object.assign({}, t, {bots});
+    const sb0 = t.sb0 || t.sb, bb0 = t.bb0 || t.bb;
+    const tt = Object.assign({}, t, {bots, sb:sb0, bb:bb0, sb0, bb0, rise:!!t.rise, every:t.every || 10});
     const mk = (name, human, pers) => ({name, human, pers, stack:t.buy, bet:0, total:0, folded:false, allIn:false, acted:false, cards:[], last:''});
     G = {
       t:tt,
@@ -587,6 +673,7 @@ input[type=range]:disabled{opacity:.3;}
       board:[], phase:'preflop', currentBet:0, minRaise:t.bb, toAct:0,
       ended:false, over:false, showdown:false, msg:'', won:null, timer:null,
       image:0, lastAggr:-1, hands:0, victory:false,
+      ver:2, acts:[], notice:'', place:0, cheaters:0,
       practice:settings.practice, gs:{handsWon:0, biggest:0, bestVal:-1, minStack:t.buy},
       startPros:bots.filter(b => b === 'profissional').length, startN:n, train:null, achNew:[],
       stats:Array.from({length:n}, () => ({h:0, r:0}))
@@ -612,10 +699,33 @@ input[type=range]:disabled{opacity:.3;}
       G.stats = G.stats.filter((_, i) => keep[i]);
     }
     const N = G.players.length;
+    /* Vingança dura algumas mãos; Mímicos escolhem quem imitar (trocam a cada 5 mãos ou quando o imitado sai) */
+    G.players.forEach(p => {
+      if (p.revenge){ p.revenge.hands--; if (p.revenge.hands <= 0) p.revenge = null; }
+      if (p.pers !== 'mimico') return;
+      const cands = G.players.filter(q => q !== p && !q.human && q.pers !== 'mimico');
+      p.mimicHands = (p.mimicHands || 0) + 1;
+      if (!cands.length){ p.mimicName = null; p.mimicOf = 'copiador'; p.mimicHands = 0; return; }
+      if (!p.mimicName || !cands.some(q => q.name === p.mimicName) || p.mimicHands > 5){
+        const pool = cands.filter(q => q.name !== p.mimicName);
+        const from = pool.length ? pool : cands;
+        const pick = from[Math.floor(Math.random() * from.length)];
+        p.mimicName = pick.name; p.mimicOf = pick.pers; p.mimicHands = 1;
+      }
+    });
     G.dealer = (G.dealer + 1) % N;
     G.board = []; G.phase = 'preflop'; G.ended = false; G.showdown = false; G.msg = ''; G.won = null;
     G.image *= 0.85; G.lastAggr = -1;
     G.stats.forEach(st => { st.h++; });
+    G.notice = '';
+    const addNote = t => { G.notice = G.notice ? G.notice + '\n' + t : t; };
+    if (G.t.rise && G.hands > 1 && (G.hands - 1) % G.t.every === 0){
+      const ratio = G.t.sb0 / G.t.bb0;
+      G.t.bb = niceBlind(G.t.bb * 1.5);
+      G.t.sb = Math.max(1, Math.round(G.t.bb * ratio));
+      addNote('Os blinds subiram para ' + fmt(G.t.sb) + ' / ' + fmt(G.t.bb) + '.');
+      sfx.blind();
+    }
     ui.raising = false;
     G.deck = shuffle(makeDeck());
     G.players.forEach(p => {
@@ -623,6 +733,18 @@ input[type=range]:disabled{opacity:.3;}
       p.show = false; p.aggr = false; p.registered = false; p.raised = false;
       p.cards = [G.deck.pop(), G.deck.pop()];
     });
+    G.acts = [];
+    G.cheaters = 0;
+    G.players.forEach((p, i) => {
+      p.peek = null;
+      if (p.human || !PERS[effId(p)].cheat) return;
+      const others = G.players.filter((q, j) => j !== i);
+      const t = others[Math.floor(Math.random() * others.length)];
+      p.peek = {name:t.name, card:t.cards[Math.floor(Math.random() * 2)]};
+      G.cheaters++;
+    });
+    if (G.cheaters) addNote(G.cheaters === 1 ? 'Um jogador trapaceou.' : G.cheaters + ' jogadores trapacearam.');
+    sfx.deal();
     const sb = N === 2 ? G.dealer : (G.dealer + 1) % N;
     const bb = (sb + 1) % N;
     [[sb, G.t.sb], [bb, G.t.bb]].forEach(([i, amt]) => {
@@ -658,7 +780,7 @@ input[type=range]:disabled{opacity:.3;}
     if (i === -1) return advance();
     G.toAct = i;
     render();
-    if (G.players[i].human){ vib(40); return; }
+    if (G.players[i].human){ vib(40); sfx.turn(); return; }
     later(() => botAct(i), G.players[0].folded ? 250 : 600 + Math.random() * 500);
   }
 
@@ -670,11 +792,12 @@ input[type=range]:disabled{opacity:.3;}
 
   function advance(){
     G.players.forEach(p => { p.bet = 0; p.acted = false; if (!p.folded && !p.allIn) p.last = ''; });
-    G.currentBet = 0; G.minRaise = G.t.bb; G.lastAggr = -1;
+    G.currentBet = 0; G.minRaise = G.t.bb; G.lastAggr = -1; G.acts = [];
     if (G.phase === 'river') return showdown();
     G.phase = ORDER[ORDER.indexOf(G.phase) + 1];
     const n = G.phase === 'flop' ? 3 : 1;
     for (let k = 0; k < n; k++) G.board.push(G.deck.pop());
+    sfx.deal();
     G.toAct = (G.dealer + 1) % G.players.length;
     const can = G.players.filter(p => !p.folded && !p.allIn).length;
     render();
@@ -686,6 +809,7 @@ input[type=range]:disabled{opacity:.3;}
   function doFold(i){
     const p = G.players[i];
     p.folded = true; p.acted = true; p.last = 'Desistiu';
+    G.acts.push({i, t:'fold'}); sfx.fold();
     next(i);
   }
   function doCall(i){
@@ -694,6 +818,7 @@ input[type=range]:disabled{opacity:.3;}
     commit(p, amt);
     p.acted = true;
     p.last = amt === 0 ? 'Passou' : (p.allIn ? 'All-in ' + fmt(p.bet) : 'Pagou ' + fmt(amt));
+    G.acts.push({i, t:amt === 0 ? 'check' : 'call'}); if (amt > 0) sfx.chip();
     next(i);
   }
   function doRaise(i, to){
@@ -712,6 +837,7 @@ input[type=range]:disabled{opacity:.3;}
     if (!p.raised){ p.raised = true; G.stats[i].r++; }
     if (p.human) p.aggr = true;
     p.last = p.allIn ? 'All-in ' + fmt(p.bet) : (wasBet ? 'Apostou ' + fmt(to) : 'Aumentou para ' + fmt(to));
+    G.acts.push({i, t:'raise'}); sfx.chip();
     next(i);
   }
 
@@ -729,9 +855,30 @@ input[type=range]:disabled{opacity:.3;}
     return doCall(i);
   }
 
+  function effId(p){ return p.pers === 'mimico' ? (p.mimicOf || 'copiador') : p.pers; }
+  const labelOf = p => p.pers === 'mimico' ? 'Mímico' : PERS[p.pers].label;
+  const persLabel = p => p.pers === 'mimico' ? 'Mímico (' + PERS[p.mimicOf || 'copiador'].label + ')' : PERS[p.pers].label;
+
+  /* Caçador: o jogador (ainda na mão) com 30% ou menos das fichas iniciais da mesa */
+  function huntTarget(i){
+    let best = -1, low = Infinity;
+    G.players.forEach((q, j) => {
+      if (j === i || q.folded) return;
+      const start = q.stack + q.total;
+      if (start > 0 && start <= 0.3 * G.t.buy && start < low){ best = j; low = start; }
+    });
+    return best;
+  }
+  /* Vingativo: quem lhe tirou muitas fichas, enquanto a vingança durar e a pessoa estiver na mão */
+  function revengeTarget(p){
+    if (!p.revenge) return -1;
+    const j = G.players.findIndex(q => q.name === p.revenge.name);
+    return j >= 0 && !G.players[j].folded ? j : -1;
+  }
+
   function botAct(i){
     const p = G.players[i];
-    const P = PERS[p.pers];
+    let P = PERS[effId(p)];
     const toCall = G.currentBet - p.bet;
     const pot = totalPot();
     const nOpp = G.players.filter((q, j) => j !== i && !q.folded).length;
@@ -739,8 +886,19 @@ input[type=range]:disabled{opacity:.3;}
     const canRaise = p.stack > toCall && others;
     if (P.chaos || Math.random() < P.misplay) return chaosAct(i, canRaise, toCall, pot);
 
+    let target = -1;
+    if (P.hunt) target = huntTarget(i);
+    else if (P.revenge) target = revengeTarget(p);
+    if (target >= 0) P = Object.assign({}, P, {aggr:P.aggr * 1.7, bluff:P.bluff + 0.2, margin:P.margin - 0.05, size:[0.65, 1.2], chase:P.chase + 0.2});
+
+    let peek = null;
+    if (P.cheat && p.peek){
+      const pj = G.players.findIndex(q => q.name === p.peek.name);
+      if (pj >= 0 && pj !== i && !G.players[pj].folded) peek = p.peek.card;
+    }
+
     const sims = Math.max(20, Math.round(P.sims * Math.min(1, 5 / (nOpp + 1))));
-    let eq = equity(p.cards, G.board, nOpp, sims);
+    let eq = equity(p.cards, G.board, nOpp, sims, peek);
     eq = Math.max(0, Math.min(1, eq + (Math.random() * 2 - 1) * P.noise));
     const str = eq * (nOpp + 1);
     const odds = toCall / (pot + toCall || 1);
@@ -752,11 +910,31 @@ input[type=range]:disabled{opacity:.3;}
       const st = G.stats[j];
       if (st.h >= 8) exploit = clamp((st.r / st.h - 0.3) * P.read * 1.5, 0, 0.14);
     }
+    if (target >= 0 && G.lastAggr === target && toCall > 0) exploit += 0.08;
     const sizeTo = frac => {
       if (frac === undefined) frac = P.size[0] + Math.random() * (P.size[1] - P.size[0]);
       const to = G.currentBet + Math.max(G.minRaise, Math.round((pot + toCall) * frac));
       return Math.min(to, p.bet + p.stack);
     };
+
+    /* Copiador: na maioria das vezes imita a jogada anterior, desde que faça sentido */
+    if (P.copy && G.acts.length && Math.random() < P.copy){
+      const last = G.acts[G.acts.length - 1];
+      let ref = last;
+      if (last.t === 'fold'){
+        if (toCall > 0 && eq < odds + 0.02){ doFold(i); return; }
+        ref = [...G.acts].reverse().find(a => a.t !== 'fold');
+      }
+      if (ref){
+        if (ref.t === 'raise'){
+          if (canRaise && eq > odds + 0.04 && str > 1.25){ doRaise(i, sizeTo(0.5 + Math.random() * 0.3)); return; }
+          if (toCall === 0 || eq > odds * 0.85){ doCall(i); return; }
+          doFold(i); return;
+        }
+        if (toCall === 0 || eq > odds * 0.9){ doCall(i); return; }
+        doFold(i); return;
+      }
+    }
 
     if (toCall === 0){
       if (canRaise && str > 1.7 && r < Math.min(0.95, 0.75 * P.aggr)) return doRaise(i, sizeTo());
@@ -795,6 +973,7 @@ input[type=range]:disabled{opacity:.3;}
     ST.biggest = Math.max(ST.biggest, gs.biggest);
     if (gs.bestVal > ST.bestVal) ST.bestVal = gs.bestVal;
     const d = ST.byDiff[G.t.diff]; d.g++; if (win) d.w++;
+    ST.placeSum += G.place; ST.placeGames++;
     let names = [];
     if (!G.practice) names = unlockAch('game', {win, diff:G.t.diff, pros:G.startPros, startN:G.startN, minStack:gs.minStack, buy});
     LS.set(STATS_KEY, ST);
@@ -803,12 +982,26 @@ input[type=range]:disabled{opacity:.3;}
 
   function endHand(msg, won){
     G.ended = true; G.won = won; ui.raising = false;
-    const me = G.players[0], gs = G.gs;
-    const gone = G.players.filter(p => !p.human && p.stack <= 0).map(p => p.name);
-    if (gone.length){
-      const list = gone.length < 2 ? gone[0] : gone.slice(0, -1).join(', ') + ' e ' + gone[gone.length - 1];
-      msg += '\n' + list + (gone.length > 1 ? ' saíram' : ' saiu') + ' da mesa.';
-    }
+    const ps = G.players, me = ps[0], gs = G.gs;
+
+    /* Colocações de quem ficou sem fichas nesta mão (quem tinha mais fichas antes fica na frente) */
+    const alive = ps.filter(p => p.stack > 0).length;
+    const busted = ps.filter(p => p.stack <= 0).sort((a, b) => b.total - a.total);
+    busted.forEach((p, k) => { p.place = alive + 1 + k; });
+    const gone = busted.filter(p => !p.human);
+    if (gone.length === 1) msg += '\n' + gone[0].name + ' (' + labelOf(gone[0]) + ') saiu da mesa em ' + gone[0].place + 'º lugar.';
+    else if (gone.length > 1) msg += '\nSaíram da mesa: ' + gone.map(p => p.name + ' (' + labelOf(p) + ') em ' + p.place + 'º').join(', ') + '.';
+
+    /* Vingativo: perdeu muitas fichas para alguém nesta mão */
+    ps.forEach((p, idx) => {
+      if (p.human || p.stack <= 0 || !PERS[effId(p)].revenge) return;
+      if (p.total - won[idx] >= 0.25 * G.t.buy){
+        let w = -1, best = 0;
+        won.forEach((v, j) => { if (j !== idx && v > best){ best = v; w = j; } });
+        if (w >= 0) p.revenge = {name:ps[w].name, hands:6};
+      }
+    });
+
     if (won[0] > 0){ gs.handsWon++; gs.biggest = Math.max(gs.biggest, won[0]); }
     gs.minStack = Math.min(gs.minStack, me.stack);
     let cat = -1;
@@ -818,22 +1011,29 @@ input[type=range]:disabled{opacity:.3;}
       const bluff = !G.showdown && won[0] > 0 && me.aggr && weakHand();
       fresh = unlockAch('hand', {won:won[0] > 0, wonAmt:won[0], showdown:G.showdown, cat, allIn:me.allIn, bluff, buy:G.t.buy});
     }
-    if (me.stack <= 0) G.over = true;
-    else if (G.players.every(p => p.human || p.stack <= 0)) G.victory = true;
+    if (me.stack <= 0){ G.over = true; G.place = me.place; }
+    else if (ps.every(p => p.human || p.stack <= 0)){ G.victory = true; G.place = 1; }
     if (G.over || G.victory) fresh = fresh.concat(commitGame(G.victory));
     fresh.forEach(n => { msg += '\nConquista desbloqueada: ' + n; });
     G.achNew = G.achNew.concat(fresh);
     G.msg = msg;
-    if (G.victory) vib([120, 60, 120, 60, 260]);
-    else if (G.over) vib(300);
-    else if (fresh.length) vib([40, 40, 40]);
-    else if (won[0] > 0) vib([70, 50, 70]);
+    if (G.victory){ vib([120, 60, 120, 60, 260]); sfx.victory(); }
+    else if (G.over){ vib(300); sfx.lose(); }
+    else if (fresh.length){ vib([40, 40, 40]); sfx.ach(); }
+    else if (won[0] > 0){ vib([70, 50, 70]); sfx.win(); }
     render();
   }
 
-  function showWin(){
+  function showEnd(){
     const n = G.t.players - 1, h = G.hands;
-    $('winText').textContent = `Você eliminou ${n} ${n === 1 ? 'adversário' : 'adversários'} da Mesa ${fmt(G.t.buy)} em ${h} ${h === 1 ? 'mão' : 'mãos'}.`;
+    const maos = h + ' ' + (h === 1 ? 'mão' : 'mãos');
+    if (G.victory){
+      $('winTitle').textContent = 'Vitória';
+      $('winText').textContent = `Você terminou em 1º lugar na Mesa ${fmt(G.t.buy)}, eliminando ${n} ${n === 1 ? 'adversário' : 'adversários'} em ${maos}.`;
+    } else {
+      $('winTitle').textContent = 'Derrota';
+      $('winText').textContent = `Você terminou em ${G.place}º lugar de ${G.startN} na Mesa ${fmt(G.t.buy)}, depois de ${maos}.`;
+    }
     $('winAch').textContent = G.achNew.length ? 'Conquistas desbloqueadas: ' + G.achNew.join(', ') + '.' : '';
     show('win');
   }
@@ -911,11 +1111,12 @@ input[type=range]:disabled{opacity:.3;}
   }
 
   /* ---------- Interface ---------- */
-  function cardHTML(c, size){
+  function cardHTML(c, size, extra){
+    const ex = extra ? ' ' + extra : '';
     if (!c) return `<div class="card ${size} empty"></div>`;
     if (c === 'b') return `<div class="card ${size} back"></div>`;
     const red = (c.s === 1 || c.s === 2) ? ' red' : '';
-    return `<div class="card ${size}${red}"><b>${rk(c.r)}</b><i>${SUIT[c.s]}</i></div>`;
+    return `<div class="card ${size}${red}${ex}"><b>${rk(c.r)}</b><i>${SUIT[c.s]}</i></div>`;
   }
 
   function raiseRange(){
@@ -949,7 +1150,7 @@ input[type=range]:disabled{opacity:.3;}
       const cardsRow = (cards || !dense) ? `<div class="ocards">${cards}</div>` : '';
       return `<div class="${cls.join(' ')}">
         <div class="oname">${p.name}${G.dealer === i ? '<span class="dealer">D</span>' : ''}</div>
-        <div class="oper">${PERS[p.pers].label}</div>
+        ${G.practice ? `<div class="oper">${persLabel(p)}</div>` : ''}
         <div class="ostack">${fmt(p.stack)}</div>
         ${cardsRow}
         <div class="olast">${p.last || '&nbsp;'}</div>
@@ -958,8 +1159,8 @@ input[type=range]:disabled{opacity:.3;}
 
     $('phase').textContent = G.ended ? 'Mão encerrada' : PH[G.phase];
     $('pot').textContent = G.ended ? '' : 'Pote ' + fmt(totalPot());
-    $('board').innerHTML = [0,1,2,3,4].map(i => cardHTML(G.board[i] || null, 'md')).join('');
-    $('msg').textContent = G.ended ? G.msg : '';
+    $('board').innerHTML = [0,1,2,3,4].map(i => cardHTML(G.board[i] || null, 'md', i >= anim.board ? 'new' : '')).join('');
+    $('msg').textContent = G.ended ? G.msg : (G.notice || '');
 
     const me = ps[0];
     const meEl = $('me');
@@ -970,10 +1171,11 @@ input[type=range]:disabled{opacity:.3;}
     if (G.ended && !me.folded) hn = G.showdown ? (me.show ? 'Cartas mostradas' : 'Muck') : (me.show ? 'Cartas mostradas' : 'Cartas ocultas');
     meEl.innerHTML = `
       <div class="mrow"><div class="oname">Você${G.dealer === 0 ? '<span class="dealer">D</span>' : ''}</div><div class="ostack">${fmt(me.stack)}</div></div>
-      <div class="mcards">${me.cards.map(c => cardHTML(c, 'lg')).join('')}</div>
+      <div class="mcards">${me.cards.map(c => cardHTML(c, 'lg', anim.hand !== G.hands ? 'new' : '')).join('')}</div>
       <div class="hn">${hn || '&nbsp;'}</div>
       ${trainHTML()}`;
 
+    anim.board = G.board.length; anim.hand = G.hands;
     renderActions();
     saveGame();
   }
@@ -987,8 +1189,8 @@ input[type=range]:disabled{opacity:.3;}
       return;
     }
     if (G.over){
-      el.innerHTML = `<div class="note">Suas fichas acabaram.</div>
-        <div class="row"><button data-a="again">Jogar de novo</button><button data-a="menu">Trocar de mesa</button></div>`;
+      el.innerHTML = `<div class="note">Suas fichas acabaram. Você ficou em ${G.place}º lugar.</div>
+        <div class="row"><button data-a="win">Continuar</button></div>`;
       return;
     }
     if (G.ended && G.victory){
@@ -1035,7 +1237,7 @@ input[type=range]:disabled{opacity:.3;}
   }
 
   /* ---------- Mesa personalizada e presets ---------- */
-  const cust = {prop:true, players:4, diff:'medio', bots:['auto','auto','auto'], preset:'manual'};
+  const cust = {prop:true, players:4, diff:'medio', bots:['auto','auto','auto'], preset:'manual', rise:true, every:10};
   const STORE_KEY = 'poker.presets.v1';
   let saved = [];
   try {
@@ -1066,6 +1268,7 @@ input[type=range]:disabled{opacity:.3;}
   function initCustomControls(){
     $('cPlayers').innerHTML = [2,3,4,5,6,7,8].map(n => `<option value="${n}">${n} jogadores</option>`).join('');
     $('cDiff').innerHTML = DIFF_IDS.map(d => `<option value="${d}">${DIFF[d].label}</option>`).join('');
+    $('cEvery').innerHTML = [5, 8, 10, 12, 15, 20].map(n => `<option value="${n}">${n} mãos</option>`).join('');
   }
   function rebuildPresets(){
     const tOpts = TABLES.map((t, i) => `<option value="t${i}">Mesa ${fmt(t.buy)} (${DIFF[t.diff].label})</option>`).join('');
@@ -1088,6 +1291,10 @@ input[type=range]:disabled{opacity:.3;}
     }
     $('cPlayers').value = String(cust.players);
     $('cDiff').value = cust.diff;
+    $('cRiseV').textContent = cust.rise ? 'Ligado' : 'Desligado';
+    $('cRiseV').className = cust.rise ? '' : 'dim';
+    $('cEveryRow').hidden = !cust.rise;
+    $('cEvery').value = String(cust.every);
     $('cDiff').style.color = 'var(--' + (cust.diff === 'facil' ? 'green' : cust.diff === 'medio' ? 'yellow' : 'red') + ')';
     const opts = ['auto'].concat(PERS_IDS);
     $('cBots').innerHTML = cust.bots.map((b, k) =>
@@ -1102,6 +1309,7 @@ input[type=range]:disabled{opacity:.3;}
     cust.prop = !!src.prop;
     $('cSB').value = src.sb; $('cBB').value = src.bb;
     cust.players = src.players; cust.diff = src.diff;
+    cust.rise = src.rise === undefined ? true : !!src.rise; cust.every = src.every || 10;
     cust.bots = (src.bots || []).slice();
     fitBots();
   }
@@ -1129,7 +1337,7 @@ input[type=range]:disabled{opacity:.3;}
     }
     if (chips < bb * 5) return {err:'As fichas precisam ser pelo menos 5 vezes o big blind.'};
     fitBots();
-    return {cfg:{buy:chips, sb, bb, players:cust.players, diff:cust.diff, bots:cust.bots.slice(), prop:cust.prop}};
+    return {cfg:{buy:chips, sb, bb, players:cust.players, diff:cust.diff, bots:cust.bots.slice(), prop:cust.prop, rise:cust.rise, every:cust.every}};
   }
   function playCustom(){
     const r = readCustom();
@@ -1182,6 +1390,7 @@ input[type=range]:disabled{opacity:.3;}
     if (t.id === 'cPreset') return onPreset(t.value);
     if (t.id === 'cPlayers'){ cust.players = +t.value; say(''); return refreshCustom(); }
     if (t.id === 'cDiff'){ cust.diff = t.value; return refreshCustom(); }
+    if (t.id === 'cEvery'){ cust.every = +t.value; return; }
     if (t.dataset && t.dataset.bot !== undefined){ cust.bots[+t.dataset.bot] = t.value; }
   });
 
@@ -1189,10 +1398,12 @@ input[type=range]:disabled{opacity:.3;}
     const b = e.target.closest('[data-a]');
     if (!b) return;
     const a = b.dataset.a;
+    audio();
 
     if (a === 'table') return newGame(TABLES[+b.dataset.i]);
     if (a === 'custom'){ say(''); refreshCustom(); return show('custom'); }
     if (a === 'cback') return show('menu');
+    if (a === 'crise'){ cust.rise = !cust.rise; say(''); return refreshCustom(); }
     if (a === 'cprop'){
       cust.prop = !cust.prop;
       if (!cust.prop){
@@ -1210,6 +1421,7 @@ input[type=range]:disabled{opacity:.3;}
     if (a === 'opts'){ ui.confirmReset = false; renderOpts(); return show('opts'); }
     if (a === 'mback'){ ui.confirmReset = false; return show('menu'); }
     if (a === 'resume') return resumeGame();
+    if (a === 'osound'){ settings.sound = !settings.sound; LS.set(SETTINGS_KEY, settings); renderOpts(); if (settings.sound) sfx.chip(); return; }
     if (a === 'otrain'){ settings.practice = !settings.practice; LS.set(SETTINGS_KEY, settings); return renderOpts(); }
     if (a === 'ovib'){ settings.vibrate = !settings.vibrate; LS.set(SETTINGS_KEY, settings); renderOpts(); if (settings.vibrate) vib(40); return; }
     if (a === 'oreset'){
@@ -1224,7 +1436,7 @@ input[type=range]:disabled{opacity:.3;}
     if (a === 'exit'){ ui.exiting = true; return renderActions(); }
     if (a === 'stay'){ ui.exiting = false; return renderActions(); }
     if (a === 'again') return newGame(G.t);
-    if (a === 'win'){ if (G.victory) showWin(); return; }
+    if (a === 'win'){ if (G.victory || G.over) showEnd(); return; }
     if (a === 'next'){ if (G.ended && !G.over) startHand(); return; }
     if (a === 'show'){
       if (G.ended && !G.players[0].folded){ G.players[0].show = true; registerShow(); render(); }
