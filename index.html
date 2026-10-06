@@ -137,11 +137,23 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 .hn{min-height:18px;font-size:14px;color:var(--dim);}
 
 /* Animações simples */
-@keyframes deal{from{opacity:0;transform:translateY(-10px) scale(.92);}to{opacity:1;transform:none;}}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.55);}100%{box-shadow:0 0 0 12px rgba(255,255,255,0);}}
-.card.new{animation:deal .28s ease-out both;}
-.opp.win,.me.win{animation:pulse .7s ease-out;}
-@media (prefers-reduced-motion:reduce){.card.new,.opp.win,.me.win{animation:none;}}
+@keyframes deal{from{opacity:0;transform:translateY(-26px) rotate(-6deg) scale(.82);}to{opacity:1;transform:none;}}
+@keyframes fade{from{opacity:0;}to{opacity:1;}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.6);}100%{box-shadow:0 0 0 14px rgba(255,255,255,0);}}
+@keyframes turn{0%,100%{border-color:#fff;}50%{border-color:#4a4a4a;}}
+@keyframes pop{0%{transform:scale(1);}40%{transform:scale(1.18);}100%{transform:scale(1);}}
+.card.new{animation:deal .38s cubic-bezier(.2,.8,.3,1) both;}
+.opp.win,.me.win{animation:pulse .9s ease-out 2;}
+.opp.turn{animation:turn 1.2s ease-in-out infinite;}
+.olast.chg{animation:fade .35s ease-out both;}
+#pot.pop{animation:pop .35s ease-out;}
+#msg.fadein{animation:fade .45s ease-out;}
+/* Com "reduzir movimento" ligado no aparelho, só um fade suave (sem deslocamento nem piscar) */
+@media (prefers-reduced-motion:reduce){
+  .card.new{animation:fade .25s ease-out both;}
+  .opp.turn{animation:none;}
+  #pot.pop{animation:none;}
+}
 
 /* Cartas */
 .card{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--fg);border-radius:5px;aspect-ratio:5/7;line-height:1;}
@@ -639,7 +651,28 @@ input[type=range]:disabled{opacity:.3;}
   const ORDER = ['preflop','flop','turn','river'];
   let G = null;
   const ui = {raising:false, val:0, exiting:false, confirmReset:false};
-  const anim = {board:0, hand:-1};
+  /* Animações: cada carta/linha só anima na primeira vez que aparece (mesmo que a tela seja redesenhada várias vezes seguidas) */
+  const anim = {seen:new Set(), pending:new Set(), timer:null, t0:0, pot:undefined, msg:undefined};
+  function isNew(key){
+    key = G.gid + '|' + key;
+    if (anim.seen.has(key)) return false;
+    anim.pending.add(key);
+    return true;
+  }
+  function flushAnim(){
+    if (!anim.pending.size || (anim.timer && Date.now() - anim.t0 < 1000)) return;
+    anim.t0 = Date.now();
+    anim.timer = setTimeout(() => {
+      anim.pending.forEach(k => anim.seen.add(k));
+      anim.pending.clear(); anim.timer = null;
+      const it = anim.seen.values();
+      while (anim.seen.size > 300) anim.seen.delete(it.next().value);
+    }, 450);
+  }
+  function pulseEl(el, cls){
+    if (!el || !el.classList) return;
+    el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
+  }
 
   const totalPot = () => G.players.reduce((a,p) => a + p.total, 0);
   function commit(p, amt){
@@ -673,7 +706,7 @@ input[type=range]:disabled{opacity:.3;}
       board:[], phase:'preflop', currentBet:0, minRaise:t.bb, toAct:0,
       ended:false, over:false, showdown:false, msg:'', won:null, timer:null,
       image:0, lastAggr:-1, hands:0, victory:false,
-      ver:2, acts:[], notice:'', place:0, cheaters:0,
+      ver:2, gid:Math.random().toString(36).slice(2), acts:[], notice:'', place:0, cheaters:0,
       practice:settings.practice, gs:{handsWon:0, biggest:0, bestVal:-1, minStack:t.buy},
       startPros:bots.filter(b => b === 'profissional').length, startN:n, train:null, achNew:[],
       stats:Array.from({length:n}, () => ({h:0, r:0}))
@@ -1111,12 +1144,13 @@ input[type=range]:disabled{opacity:.3;}
   }
 
   /* ---------- Interface ---------- */
-  function cardHTML(c, size, extra){
+  function cardHTML(c, size, extra, delay){
     const ex = extra ? ' ' + extra : '';
+    const st = extra && delay ? ` style="animation-delay:${delay}ms"` : '';
     if (!c) return `<div class="card ${size} empty"></div>`;
     if (c === 'b') return `<div class="card ${size} back"></div>`;
     const red = (c.s === 1 || c.s === 2) ? ' red' : '';
-    return `<div class="card ${size}${red}${ex}"><b>${rk(c.r)}</b><i>${SUIT[c.s]}</i></div>`;
+    return `<div class="card ${size}${red}${ex}"${st}><b>${rk(c.r)}</b><i>${SUIT[c.s]}</i></div>`;
   }
 
   function raiseRange(){
@@ -1153,14 +1187,18 @@ input[type=range]:disabled{opacity:.3;}
         ${G.practice ? `<div class="oper">${persLabel(p)}</div>` : ''}
         <div class="ostack">${fmt(p.stack)}</div>
         ${cardsRow}
-        <div class="olast">${p.last || '&nbsp;'}</div>
+        <div class="olast${p.last && isNew('l-' + p.name + '-' + G.hands + '-' + p.last) ? ' chg' : ''}">${p.last || '&nbsp;'}</div>
       </div>`;
     }).join('');
 
     $('phase').textContent = G.ended ? 'Mão encerrada' : PH[G.phase];
-    $('pot').textContent = G.ended ? '' : 'Pote ' + fmt(totalPot());
-    $('board').innerHTML = [0,1,2,3,4].map(i => cardHTML(G.board[i] || null, 'md', i >= anim.board ? 'new' : '')).join('');
-    $('msg').textContent = G.ended ? G.msg : (G.notice || '');
+    const potTxt = G.ended ? '' : 'Pote ' + fmt(totalPot());
+    $('pot').textContent = potTxt;
+    if (anim.pot !== potTxt){ anim.pot = potTxt; if (potTxt) pulseEl($('pot'), 'pop'); }
+    $('board').innerHTML = [0,1,2,3,4].map(i => cardHTML(G.board[i] || null, 'md', G.board[i] && isNew('b' + i + '-' + G.hands) ? 'new' : '', i < 3 ? i * 90 : 0)).join('');
+    const msgTxt = G.ended ? G.msg : (G.notice || '');
+    $('msg').textContent = msgTxt;
+    if (anim.msg !== msgTxt){ anim.msg = msgTxt; if (msgTxt) pulseEl($('msg'), 'fadein'); }
 
     const me = ps[0];
     const meEl = $('me');
@@ -1171,11 +1209,11 @@ input[type=range]:disabled{opacity:.3;}
     if (G.ended && !me.folded) hn = G.showdown ? (me.show ? 'Cartas mostradas' : 'Muck') : (me.show ? 'Cartas mostradas' : 'Cartas ocultas');
     meEl.innerHTML = `
       <div class="mrow"><div class="oname">Você${G.dealer === 0 ? '<span class="dealer">D</span>' : ''}</div><div class="ostack">${fmt(me.stack)}</div></div>
-      <div class="mcards">${me.cards.map(c => cardHTML(c, 'lg', anim.hand !== G.hands ? 'new' : '')).join('')}</div>
+      <div class="mcards">${me.cards.map((c, k) => cardHTML(c, 'lg', isNew('h' + k + '-' + G.hands) ? 'new' : '', k * 120)).join('')}</div>
       <div class="hn">${hn || '&nbsp;'}</div>
       ${trainHTML()}`;
 
-    anim.board = G.board.length; anim.hand = G.hands;
+    flushAnim();
     renderActions();
     saveGame();
   }
