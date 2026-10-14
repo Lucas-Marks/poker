@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#000000">
+<script>try{var __s=JSON.parse(localStorage.getItem("poker.settings.v1")||"{}");if(__s.theme)document.documentElement.setAttribute("data-theme",__s.theme);}catch(e){}</script>
 <title>Poker</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png" type="image/png">
@@ -15,18 +16,20 @@
 <meta name="apple-mobile-web-app-title" content="Poker">
 <style>
 :root{
-  --bg:#000;
-  --fg:#fff;
-  --dim:#8c8c8c;
-  --line:#2e2e2e;
-  --red:#ff5c5c;
-  --green:#3ddc84;
-  --yellow:#ffd23f;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
-  color-scheme:dark;
 }
+/* Temas: tudo usa estas variáveis */
+:root,[data-theme="escuro"]{--bg:#000;--bg2:#000;--fg:#fff;--dim:#8c8c8c;--line:#2e2e2e;--inv:#000;--panel:transparent;--card-bg:transparent;--card-fg:#fff;--card-red:#ff5c5c;--card-line:#fff;--back:#444;--back-bg:transparent;--empty:#333;--red:#ff5c5c;--green:#3ddc84;--yellow:#ffd23f;--glow:255,255,255;color-scheme:dark;}
+[data-theme="claro"]{--bg:#fff;--bg2:#fff;--fg:#000;--dim:#6b6b6b;--line:#d9d9d9;--inv:#fff;--panel:transparent;--card-bg:transparent;--card-fg:#000;--card-red:#d32f2f;--card-line:#000;--back:#9a9a9a;--back-bg:transparent;--empty:#c8c8c8;--red:#d32f2f;--green:#12803b;--yellow:#9a7200;--glow:0,0,0;color-scheme:light;}
+/* Mesas clássicas: feltro colorido e cartas brancas */
+[data-theme="verde"],[data-theme="vermelha"],[data-theme="azul"],[data-theme="roxa"],[data-theme="dark"]{--fg:#fff;--dim:rgba(255,255,255,.68);--line:rgba(255,255,255,.24);--panel:rgba(0,0,0,.22);--card-bg:#fdfdfb;--card-fg:#141414;--card-red:#c62828;--card-line:rgba(0,0,0,.35);--back-bg:rgba(0,0,0,.35);--back:rgba(255,255,255,.5);--empty:rgba(255,255,255,.28);--red:#ff9a8f;--green:#8dffb0;--yellow:#ffe27a;--glow:255,255,255;color-scheme:dark;}
+[data-theme="verde"]{--bg:#0b5d34;--bg2:#13804a;--inv:#0b5d34;}
+[data-theme="vermelha"]{--bg:#6e101d;--bg2:#98202f;--inv:#6e101d;}
+[data-theme="azul"]{--bg:#0f3566;--bg2:#1a5aa1;--inv:#0f3566;}
+[data-theme="roxa"]{--bg:#3f1a60;--bg2:#63309a;--inv:#3f1a60;}
+[data-theme="dark"]{--bg:#121617;--bg2:#222a2c;--inv:#121617;--line:rgba(255,255,255,.18);}
 html{scroll-padding-top:env(safe-area-inset-top,0px);}
 *,*::before,*::after{box-sizing:inherit;}
 [hidden]{display:none!important;}
@@ -38,6 +41,7 @@ html,body{
   -webkit-user-select:none;user-select:none;
   overscroll-behavior:none;touch-action:manipulation;
 }
+body{background:radial-gradient(130% 90% at 50% 30%, var(--bg2), var(--bg));}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
 button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 .dim{color:var(--dim);}
@@ -53,15 +57,15 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 .head h1{margin:0 0 10px;font-size:46px;font-weight:300;letter-spacing:-.02em;}
 #custom .head h1{font-size:38px;}
 .head p{margin:0;color:var(--dim);font-size:16px;line-height:1.45;max-width:30ch;}
-.box{border:1px solid var(--fg);border-radius:6px;overflow:hidden;}
+.box{border:1px solid var(--fg);border-radius:6px;overflow:hidden;background:var(--panel);}
 .box>*+*{border-top:1px solid var(--line);}
 .box .row{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;}
 .box .row>button+button{border-left:1px solid var(--line);}
 .box button{padding:16px 8px;min-height:54px;}
-.box button:active{background:var(--fg);color:#000;}
+.box button:active{background:var(--fg);color:var(--inv);}
 .box button:disabled{color:var(--dim);cursor:default;}
 .box button:disabled:active{background:none;color:var(--dim);}
-#tables{overflow-y:auto;min-height:0;flex:0 1 auto;scrollbar-width:thin;scrollbar-color:#444 #000;-webkit-overflow-scrolling:touch;}
+#tables{overflow-y:auto;min-height:0;flex:0 1 auto;scrollbar-width:thin;scrollbar-color:var(--dim) transparent;-webkit-overflow-scrolling:touch;}
 .opt{flex:none;display:flex;justify-content:space-between;align-items:center;width:100%;padding:14px 18px!important;text-align:left;}
 .ol,.or{display:flex;flex-direction:column;gap:3px;}
 .or{align-items:flex-end;}
@@ -69,7 +73,7 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 .od{font-size:13px;}
 .ob{font-size:14px;color:var(--dim);}
 .op{font-size:12px;color:var(--dim);}
-.box button:active span{color:#000;}
+.box button:active span{color:var(--inv);}
 
 /* Personalizada */
 #custom,#stats,#ach,#opts{gap:16px;overflow-y:auto;}
@@ -88,12 +92,12 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 .field{display:flex;justify-content:space-between;align-items:center;gap:16px;width:100%;min-height:56px;padding:0 18px;font-size:18px;text-align:left;position:relative;}
 .box button.field{padding:0 18px;}
 .field input{flex:1;min-width:0;text-align:right;background:transparent;border:0;outline:none;color:var(--fg);font:inherit;font-size:20px;padding:0;-webkit-user-select:text;user-select:text;-moz-appearance:textfield;}
-.field input::placeholder{color:#555;}
+.field input::placeholder{color:var(--dim);opacity:.6;}
 .field input::-webkit-inner-spin-button,.field input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 .field:focus-within{outline:2px solid var(--fg);outline-offset:-4px;}
 .field.sel span{position:relative;pointer-events:none;}
 .field.sel select{position:absolute;inset:0;width:100%;height:100%;padding:0 18px;border:0;outline:none;background:transparent;color:var(--fg);font:inherit;font-size:18px;text-align:right;text-align-last:right;-webkit-appearance:none;appearance:none;cursor:pointer;}
-.field.sel select option,.field.sel select optgroup{background:#000;color:#fff;}
+.field.sel select option,.field.sel select optgroup{background:var(--bg);color:var(--fg);}
 .botlist>*+*{border-top:1px solid var(--line);}
 .err{min-height:20px;font-size:14px;color:var(--red);}
 .err.ok{color:var(--fg);}
@@ -108,7 +112,7 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 .top .left{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;justify-content:flex-end;}
 .top .link{padding:12px 16px 12px 0;}
 .opps{display:grid;grid-template-columns:repeat(var(--c,3),minmax(0,1fr));gap:8px;}
-.opp{min-width:0;border:1px solid var(--line);border-radius:6px;padding:8px;}
+.opp{min-width:0;border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--panel);}
 .opp.turn,.opp.win,.me.win{border-color:var(--fg);}
 .opp.fold{opacity:.4;}
 .oname{font-size:14px;color:var(--dim);}
@@ -129,18 +133,37 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 .meta #pot{color:var(--fg);}
 .board{display:flex;gap:6px;}
 .msg{min-height:22px;font-size:16px;text-align:center;white-space:pre-line;}
-.me{border:1px solid var(--line);border-radius:6px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.me{border:1px solid var(--line);border-radius:6px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--panel);}
 .me .mrow{display:flex;justify-content:space-between;align-items:baseline;width:100%;}
 .me .mrow .ostack{margin:0;}
 .mcards{display:flex;gap:10px;}
 .me.fold .mcards{opacity:.4;}
 .hn{min-height:18px;font-size:14px;color:var(--dim);}
 
+/* Ajuda, histórico e confirmação */
+.row.g2{grid-template-columns:1fr 1fr;grid-auto-flow:row;}
+.box .row.g2>button{border-left:0;}
+.box .row.g2>button:nth-child(2n){border-left:1px solid var(--line);}
+.box .row.g2>button:nth-child(n+3){border-top:1px solid var(--line);}
+.top .lefts{display:flex;gap:16px;}
+.ad2{font-size:12px;color:var(--dim);text-align:right;}
+.hp{padding:12px 18px;font-size:14px;line-height:1.45;color:var(--dim);}
+.hp b{color:var(--fg);font-weight:500;}
+.overlay{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.86);display:flex;align-items:center;justify-content:center;padding:16px;}
+.mbox{width:100%;max-width:420px;background:var(--bg);}
+#hist{background:var(--bg);align-items:stretch;padding:0;}
+.hbox{width:100%;max-width:480px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:16px;height:100%;padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));}
+#hist .head h1{font-size:34px;margin:0;}
+.hbody{flex:1;min-height:0;overflow-y:auto;font-size:14px;}
+.hh{padding:10px 0;border-top:1px solid var(--line);}
+.hn2{color:var(--dim);font-size:12px;margin-bottom:4px;}
+.hl{padding:1px 0;}
+
 /* Animações simples */
 @keyframes deal{from{opacity:0;transform:translateY(-26px) rotate(-6deg) scale(.82);}to{opacity:1;transform:none;}}
 @keyframes fade{from{opacity:0;}to{opacity:1;}}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.6);}100%{box-shadow:0 0 0 14px rgba(255,255,255,0);}}
-@keyframes turn{0%,100%{border-color:#fff;}50%{border-color:#4a4a4a;}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(var(--glow),.6);}100%{box-shadow:0 0 0 14px rgba(var(--glow),0);}}
+@keyframes turn{0%,100%{border-color:var(--fg);}50%{border-color:var(--dim);}}
 @keyframes pop{0%{transform:scale(1);}40%{transform:scale(1.18);}100%{transform:scale(1);}}
 .card.new{animation:deal .38s cubic-bezier(.2,.8,.3,1) both;}
 .opp.win,.me.win{animation:pulse .9s ease-out 2;}
@@ -156,12 +179,12 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
 }
 
 /* Cartas */
-.card{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--fg);border-radius:5px;aspect-ratio:5/7;line-height:1;}
+.card{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--card-line);border-radius:5px;aspect-ratio:5/7;line-height:1;background:var(--card-bg);color:var(--card-fg);}
 .card b{font-weight:500;}
 .card i{font-style:normal;}
-.card.red{color:var(--red);}
-.card.back{border-color:#444;}
-.card.empty{border:1px dashed #333;}
+.card.red{color:var(--card-red);}
+.card.back{border-color:var(--back);background:var(--back-bg);}
+.card.empty{border:1px dashed var(--empty);background:transparent;}
 .card.sm{width:26px;}.card.sm b{font-size:12px;}.card.sm i{font-size:10px;}
 .card.md{width:min(54px,15vw);}.card.md b{font-size:20px;}.card.md i{font-size:18px;margin-top:3px;}
 .card.lg{width:64px;}.card.lg b{font-size:28px;}.card.lg i{font-size:24px;margin-top:4px;}
@@ -196,7 +219,7 @@ input[type=range]:disabled{opacity:.3;}
     <p>Texas hold'em contra adversários com personalidades diferentes. Funciona sem internet e sem fichas para comprar.</p>
   </div>
   <div class="box" id="tables"></div>
-  <div class="box"><div class="row"><button data-a="stats">Estatísticas</button><button data-a="ach">Conquistas</button><button data-a="opts">Opções</button></div></div>
+  <div class="box"><div class="row g2"><button data-a="stats">Estatísticas</button><button data-a="ach">Conquistas</button><button data-a="opts">Opções</button><button data-a="help">Ajuda</button></div></div>
 </section>
 
 <section id="stats" class="screen" hidden>
@@ -217,12 +240,12 @@ input[type=range]:disabled{opacity:.3;}
 <section id="opts" class="screen" hidden>
   <div class="head"><h1>Opções</h1></div>
   <div class="box">
+    <label class="field sel"><span>Tema</span><select id="oTheme" aria-label="Tema"></select></label>
     <button class="field" data-a="otrain"><span class="al"><span class="an">Modo treino</span><span class="ad">Mostra sua chance de ganhar e uma sugestão. Não dá conquistas.</span></span><span id="oTrain">Desligado</span></button>
-    <button class="field" data-a="ovib"><span class="al"><span class="an">Vibração</span><span class="ad">Vibra na sua vez e quando você ganha.</span></span><span id="oVib">Ligado</span></button>
+    <button class="field" data-a="ospeed"><span class="al"><span class="an">Velocidade dos bots</span><span class="ad">Quanto tempo eles levam para jogar.</span></span><span id="oSpeed">Normal</span></button>
     <button class="field" data-a="osound"><span class="al"><span class="an">Sons</span><span class="ad">Cartas, fichas e avisos simples.</span></span><span id="oSound">Ligado</span></button>
     <button class="field" data-a="oreset"><span class="al"><span class="an" id="oResetT">Zerar estatísticas e conquistas</span></span></button>
   </div>
-  <p id="oVibNote" class="small dim"></p>
   <div class="box"><div class="row"><button data-a="mback">Voltar</button></div></div>
 </section>
 
@@ -254,6 +277,31 @@ input[type=range]:disabled{opacity:.3;}
   <div class="box"><div class="row"><button data-a="cback">Voltar</button><button data-a="cplay">Jogar</button></div></div>
 </section>
 
+<section id="help" class="screen" hidden>
+  <div class="head"><h1>Ajuda</h1></div>
+  <p class="small dim">Mãos do poker, da mais forte para a mais fraca.</p>
+  <div class="box">
+    <div class="field stat"><span>Royal flush</span><span class="ad2">A K Q J 10 do mesmo naipe</span></div>
+    <div class="field stat"><span>Straight flush</span><span class="ad2">5 seguidas do mesmo naipe</span></div>
+    <div class="field stat"><span>Quadra</span><span class="ad2">4 cartas iguais</span></div>
+    <div class="field stat"><span>Full house</span><span class="ad2">trinca + par</span></div>
+    <div class="field stat"><span>Flush</span><span class="ad2">5 do mesmo naipe</span></div>
+    <div class="field stat"><span>Sequência</span><span class="ad2">5 cartas seguidas</span></div>
+    <div class="field stat"><span>Trinca</span><span class="ad2">3 cartas iguais</span></div>
+    <div class="field stat"><span>Dois pares</span><span class="ad2">dois pares diferentes</span></div>
+    <div class="field stat"><span>Par</span><span class="ad2">2 cartas iguais</span></div>
+    <div class="field stat"><span>Carta alta</span><span class="ad2">nenhuma das anteriores</span></div>
+  </div>
+  <div class="box">
+    <div class="hp"><b>Ações.</b> Passar (sem apostar), Pagar (igualar a aposta), Aumentar e Desistir.</div>
+    <div class="hp"><b>Blinds.</b> Apostas obrigatórias de dois jogadores a cada mão. Em mesas com blinds crescentes, elas sobem com o tempo.</div>
+    <div class="hp"><b>Mostrar cartas.</b> No fim da mão, mostra quem ganhou e quem fez o último aumento. Se alguém estiver all-in, todos mostram. Os demais podem dar muck (não mostrar).</div>
+    <div class="hp"><b>Modo treino.</b> Em Opções. Mostra sua chance de ganhar e uma sugestão. Não dá conquistas.</div>
+    <div class="hp"><b>Continuar partida.</b> Ao tocar em Sair, a partida fica salva. Só partidas concluídas entram nas estatísticas.</div>
+  </div>
+  <div class="box"><div class="row"><button data-a="mback">Voltar</button></div></div>
+</section>
+
 <section id="win" class="screen" hidden>
   <div class="head">
     <h1 id="winTitle">Vitória</h1>
@@ -265,7 +313,7 @@ input[type=range]:disabled{opacity:.3;}
 
 <section id="game" class="screen" hidden>
   <div class="top">
-    <button class="link" data-a="exit">Sair</button>
+    <div class="lefts"><button class="link" data-a="exit">Sair</button><button class="link" data-a="hist">Histórico</button></div>
     <div class="left" id="tinfo"></div>
   </div>
   <div id="opps" class="opps"></div>
@@ -277,6 +325,9 @@ input[type=range]:disabled{opacity:.3;}
   <div id="me" class="me"></div>
   <div id="actions" class="box actions"></div>
 </section>
+
+<div id="modal" class="overlay" hidden><div class="box mbox"><div class="note" id="mText"></div><div class="row"><button data-a="mno">Cancelar</button><button data-a="myes">Substituir</button></div></div></div>
+<div id="hist" class="overlay" hidden><div class="hbox"><div class="head"><h1>Histórico</h1></div><div id="hBody" class="hbody"></div><div class="box"><div class="row"><button data-a="hclose">Fechar</button></div></div></div></div>
 
 <script>
 (() => {
@@ -392,17 +443,33 @@ input[type=range]:disabled{opacity:.3;}
     del(k){ try { localStorage.removeItem(k); } catch (e) {} }
   };
   const SETTINGS_KEY = 'poker.settings.v1', STATS_KEY = 'poker.stats.v1', SAVE_KEY = 'poker.save.v1';
-  const settings = Object.assign({practice:false, vibrate:true, sound:true}, LS.get(SETTINGS_KEY, {}));
+  const settings = Object.assign({practice:false, sound:true, speed:'normal', theme:'escuro'}, LS.get(SETTINGS_KEY, {}));
+  const SPEEDS = {lenta:1.8, normal:1, rapida:0.45};
+  const speedMul = () => SPEEDS[settings.speed] || 1;
+
+  /* Temas (a lista facilita acrescentar temas desbloqueáveis no futuro) */
+  const THEMES = [
+    {id:'escuro',   label:'Minimalista escuro', color:'#000000'},
+    {id:'claro',    label:'Minimalista claro',  color:'#ffffff'},
+    {id:'verde',    label:'Mesa verde',         color:'#0b5d34'},
+    {id:'vermelha', label:'Mesa vermelha',      color:'#6e101d'},
+    {id:'azul',     label:'Mesa azul',          color:'#0f3566'},
+    {id:'roxa',     label:'Mesa roxa',          color:'#3f1a60'},
+    {id:'dark',     label:'Mesa dark',          color:'#121617'}
+  ];
+  function applyTheme(id){
+    const t = THEMES.find(x => x.id === id) || THEMES[0];
+    if (document.documentElement && document.documentElement.setAttribute) document.documentElement.setAttribute('data-theme', t.id);
+    const m = typeof document.querySelector === 'function' ? document.querySelector('meta[name="theme-color"]') : null;
+    if (m) m.setAttribute('content', t.color);
+  }
+  $('oTheme').innerHTML = THEMES.map(t => `<option value="${t.id}">${t.label}</option>`).join('');
+  applyTheme(settings.theme);
   const defStats = () => ({games:0, wins:0, losses:0, chipsWon:0, chipsLost:0, hands:0, handsWon:0, biggest:0, bestVal:-1,
     streak:0, bestStreak:0, byDiff:{facil:{g:0,w:0}, medio:{g:0,w:0}, dificil:{g:0,w:0}}, ach:{}, placeSum:0, placeGames:0});
   let ST = Object.assign(defStats(), LS.get(STATS_KEY, {}));
   ['facil','medio','dificil'].forEach(d => { ST.byDiff[d] = Object.assign({g:0, w:0}, (ST.byDiff || {})[d]); });
   if (!ST.ach) ST.ach = {};
-
-  function vib(pattern){
-    if (!settings.vibrate || typeof navigator === 'undefined' || !navigator.vibrate) return;
-    try { navigator.vibrate(pattern); } catch (e) {}
-  }
 
   /* ---------- Sons simples (gerados pelo próprio aparelho, sem arquivos) ---------- */
   let AC = null;
@@ -493,7 +560,7 @@ input[type=range]:disabled{opacity:.3;}
 
   function loadSave(){
     const sv = LS.get(SAVE_KEY, null);
-    return sv && sv.ver === 2 && sv.t && sv.gs && Array.isArray(sv.players) && sv.players.length > 1 ? sv : null;
+    return sv && sv.ver === 3 && sv.t && sv.gs && Array.isArray(sv.players) && sv.players.length > 1 ? sv : null;
   }
   function saveGame(){
     if (!G) return;
@@ -523,7 +590,7 @@ input[type=range]:disabled{opacity:.3;}
     const str = eq * (nOpp + 1);
     let sug;
     if (toCall === 0) sug = str > 1.7 ? 'Apostar' : 'Passar';
-    else if (eq > odds + 0.05) sug = str > 1.9 ? 'Aumentar' : (toCall >= me.stack ? 'Pagar tudo' : 'Pagar');
+    else if (eq > odds + 0.05) sug = str > 1.9 && !me.locked ? 'Aumentar' : (toCall >= me.stack ? 'Pagar tudo' : 'Pagar');
     else sug = 'Desistir';
     G.train = {key, eq, odds, toCall, sug};
     return G.train;
@@ -565,12 +632,11 @@ input[type=range]:disabled{opacity:.3;}
   function renderOpts(){
     $('oTrain').textContent = settings.practice ? 'Ligado' : 'Desligado';
     $('oTrain').className = settings.practice ? '' : 'dim';
-    $('oVib').textContent = settings.vibrate ? 'Ligado' : 'Desligado';
-    $('oVib').className = settings.vibrate ? '' : 'dim';
+    $('oTheme').value = settings.theme;
+    $('oSpeed').textContent = {lenta:'Lenta', normal:'Normal', rapida:'Rápida'}[settings.speed] || 'Normal';
     $('oSound').textContent = settings.sound ? 'Ligado' : 'Desligado';
     $('oSound').className = settings.sound ? '' : 'dim';
     $('oResetT').textContent = ui.confirmReset ? 'Toque de novo para apagar tudo' : 'Zerar estatísticas e conquistas';
-    $('oVibNote').textContent = (typeof navigator !== 'undefined' && navigator.vibrate) ? '' : 'Este navegador não permite vibração (no iPhone não funciona).';
   }
 
   /* sims: precisão do cálculo | noise: erro de avaliação | margin: exigência para pagar (negativo = paga demais)
@@ -674,6 +740,26 @@ input[type=range]:disabled{opacity:.3;}
     el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
   }
 
+  /* Histórico da mão */
+  const cardTxt = c => rk(c.r) + SUIT[c.s];
+  function hlog(text){
+    G.hist.push({h:G.hands, t:text});
+    if (G.hist.length > 220) G.hist = G.hist.filter(x => x.h >= G.hands - 2);
+  }
+  function renderHist(){
+    const hs = [...new Set(G.hist.map(x => x.h))].sort((a, b) => b - a);
+    $('hBody').innerHTML = hs.length
+      ? hs.map(h => `<div class="hh"><div class="hn2">Mão ${h}</div>` + G.hist.filter(x => x.h === h).map(x => `<div class="hl">${esc(x.t)}</div>`).join('') + '</div>').join('')
+      : '<div class="note">Ainda sem jogadas.</div>';
+  }
+  function guardNew(fn){
+    if (loadSave()){
+      ui.pendingStart = fn;
+      $('mText').textContent = 'Você tem uma partida salva. Começar outra substitui a partida salva.';
+      $('modal').hidden = false;
+    } else fn();
+  }
+
   const totalPot = () => G.players.reduce((a,p) => a + p.total, 0);
   function commit(p, amt){
     amt = Math.max(0, Math.min(amt, p.stack));
@@ -685,7 +771,7 @@ input[type=range]:disabled{opacity:.3;}
     g.timer = setTimeout(() => { if (G === g) fn(); }, ms);
   }
   function show(name){
-    ['menu','custom','win','game','stats','ach','opts'].forEach(n => { $(n).hidden = n !== name; });
+    ['menu','custom','win','game','stats','ach','opts','help'].forEach(n => { $(n).hidden = n !== name; });
     if (name === 'menu') renderMenu();
   }
 
@@ -706,7 +792,7 @@ input[type=range]:disabled{opacity:.3;}
       board:[], phase:'preflop', currentBet:0, minRaise:t.bb, toAct:0,
       ended:false, over:false, showdown:false, msg:'', won:null, timer:null,
       image:0, lastAggr:-1, hands:0, victory:false,
-      ver:2, gid:Math.random().toString(36).slice(2), acts:[], notice:'', place:0, cheaters:0,
+      ver:3, gid:Math.random().toString(36).slice(2), hist:[], finalAggr:-1, acts:[], notice:'', place:0, cheaters:0,
       practice:settings.practice, gs:{handsWon:0, biggest:0, bestVal:-1, minStack:t.buy},
       startPros:bots.filter(b => b === 'profissional').length, startN:n, train:null, achNew:[],
       stats:Array.from({length:n}, () => ({h:0, r:0}))
@@ -748,7 +834,7 @@ input[type=range]:disabled{opacity:.3;}
     });
     G.dealer = (G.dealer + 1) % N;
     G.board = []; G.phase = 'preflop'; G.ended = false; G.showdown = false; G.msg = ''; G.won = null;
-    G.image *= 0.85; G.lastAggr = -1;
+    G.image *= 0.85; G.lastAggr = -1; G.finalAggr = -1;
     G.stats.forEach(st => { st.h++; });
     G.notice = '';
     const addNote = t => { G.notice = G.notice ? G.notice + '\n' + t : t; };
@@ -763,7 +849,7 @@ input[type=range]:disabled{opacity:.3;}
     G.deck = shuffle(makeDeck());
     G.players.forEach(p => {
       p.bet = 0; p.total = 0; p.folded = false; p.allIn = false; p.acted = false; p.last = '';
-      p.show = false; p.aggr = false; p.registered = false; p.raised = false;
+      p.show = false; p.aggr = false; p.registered = false; p.raised = false; p.locked = false;
       p.cards = [G.deck.pop(), G.deck.pop()];
     });
     G.acts = [];
@@ -778,14 +864,17 @@ input[type=range]:disabled{opacity:.3;}
     });
     if (G.cheaters) addNote(G.cheaters === 1 ? 'Um jogador trapaceou.' : G.cheaters + ' jogadores trapacearam.');
     sfx.deal();
+    hlog('Botão: ' + G.players[G.dealer].name);
+    if (G.notice) hlog(G.notice.replace(/\n/g, ' '));
     const sb = N === 2 ? G.dealer : (G.dealer + 1) % N;
     const bb = (sb + 1) % N;
     [[sb, G.t.sb], [bb, G.t.bb]].forEach(([i, amt]) => {
       const p = G.players[i];
       commit(p, amt);
       p.last = 'Blind ' + fmt(p.bet);
+      hlog(p.name + ': Blind ' + fmt(p.bet));
     });
-    G.currentBet = Math.max(...G.players.map(p => p.bet));
+    G.currentBet = G.t.bb;
     G.minRaise = G.t.bb;
     G.toAct = (bb + 1) % N;
     render();
@@ -813,8 +902,8 @@ input[type=range]:disabled{opacity:.3;}
     if (i === -1) return advance();
     G.toAct = i;
     render();
-    if (G.players[i].human){ vib(40); sfx.turn(); return; }
-    later(() => botAct(i), G.players[0].folded ? 250 : 600 + Math.random() * 500);
+    if (G.players[i].human){ sfx.turn(); return; }
+    later(() => botAct(i), (G.players[0].folded ? 250 : 600 + Math.random() * 500) * speedMul());
   }
 
   function next(i){
@@ -824,17 +913,19 @@ input[type=range]:disabled{opacity:.3;}
   }
 
   function advance(){
-    G.players.forEach(p => { p.bet = 0; p.acted = false; if (!p.folded && !p.allIn) p.last = ''; });
+    G.players.forEach(p => { p.bet = 0; p.acted = false; p.locked = false; if (!p.folded && !p.allIn) p.last = ''; });
+    G.finalAggr = G.lastAggr;
     G.currentBet = 0; G.minRaise = G.t.bb; G.lastAggr = -1; G.acts = [];
     if (G.phase === 'river') return showdown();
     G.phase = ORDER[ORDER.indexOf(G.phase) + 1];
     const n = G.phase === 'flop' ? 3 : 1;
     for (let k = 0; k < n; k++) G.board.push(G.deck.pop());
     sfx.deal();
+    hlog(PH[G.phase] + ': ' + G.board.map(cardTxt).join(' '));
     G.toAct = (G.dealer + 1) % G.players.length;
     const can = G.players.filter(p => !p.folded && !p.allIn).length;
     render();
-    if (can < 2){ G.runout = true; later(advance, 1100); }
+    if (can < 2){ G.runout = true; later(advance, 1100 * speedMul()); }
     else { G.runout = false; loop(); }
   }
 
@@ -843,6 +934,7 @@ input[type=range]:disabled{opacity:.3;}
     const p = G.players[i];
     p.folded = true; p.acted = true; p.last = 'Desistiu';
     G.acts.push({i, t:'fold'}); sfx.fold();
+    hlog(p.name + ': ' + p.last);
     next(i);
   }
   function doCall(i){
@@ -852,6 +944,7 @@ input[type=range]:disabled{opacity:.3;}
     p.acted = true;
     p.last = amt === 0 ? 'Passou' : (p.allIn ? 'All-in ' + fmt(p.bet) : 'Pagou ' + fmt(amt));
     G.acts.push({i, t:amt === 0 ? 'check' : 'call'}); if (amt > 0) sfx.chip();
+    hlog(p.name + ': ' + p.last);
     next(i);
   }
   function doRaise(i, to){
@@ -862,7 +955,10 @@ input[type=range]:disabled{opacity:.3;}
     commit(p, to - p.bet);
     if (raiseBy >= G.minRaise){
       G.minRaise = raiseBy;
-      G.players.forEach((q, j) => { if (j !== i && !q.folded && !q.allIn) q.acted = false; });
+      G.players.forEach((q, j) => { if (j !== i && !q.folded && !q.allIn) q.acted = false; q.locked = false; });
+    } else if (raiseBy > 0){
+      /* all-in menor que o aumento mínimo: quem já tinha agido só pode pagar ou desistir */
+      G.players.forEach((q, j) => { if (j !== i && !q.folded && !q.allIn && q.acted) q.locked = true; });
     }
     if (to > G.currentBet) G.currentBet = to;
     p.acted = true;
@@ -871,6 +967,7 @@ input[type=range]:disabled{opacity:.3;}
     if (p.human) p.aggr = true;
     p.last = p.allIn ? 'All-in ' + fmt(p.bet) : (wasBet ? 'Apostou ' + fmt(to) : 'Aumentou para ' + fmt(to));
     G.acts.push({i, t:'raise'}); sfx.chip();
+    hlog(p.name + ': ' + p.last);
     next(i);
   }
 
@@ -916,7 +1013,7 @@ input[type=range]:disabled{opacity:.3;}
     const pot = totalPot();
     const nOpp = G.players.filter((q, j) => j !== i && !q.folded).length;
     const others = G.players.some((q, j) => j !== i && !q.folded && !q.allIn);
-    const canRaise = p.stack > toCall && others;
+    const canRaise = p.stack > toCall && others && !p.locked;
     if (P.chaos || Math.random() < P.misplay) return chaosAct(i, canRaise, toCall, pot);
 
     let target = -1;
@@ -1050,10 +1147,11 @@ input[type=range]:disabled{opacity:.3;}
     fresh.forEach(n => { msg += '\nConquista desbloqueada: ' + n; });
     G.achNew = G.achNew.concat(fresh);
     G.msg = msg;
-    if (G.victory){ vib([120, 60, 120, 60, 260]); sfx.victory(); }
-    else if (G.over){ vib(300); sfx.lose(); }
-    else if (fresh.length){ vib([40, 40, 40]); sfx.ach(); }
-    else if (won[0] > 0){ vib([70, 50, 70]); sfx.win(); }
+    msg.split('\n').forEach(l => hlog(l));
+    if (G.victory){ sfx.victory(); }
+    else if (G.over){ sfx.lose(); }
+    else if (fresh.length){ sfx.ach(); }
+    else if (won[0] > 0){ sfx.win(); }
     render();
   }
 
@@ -1122,13 +1220,26 @@ input[type=range]:disabled{opacity:.3;}
       const w = pot.eligible.filter(i => ps[i].eval === best);
       const share = Math.floor(pot.amount / w.length);
       w.forEach(i => { won[i] += share; });
-      won[w[0]] += pot.amount - share * w.length;
+      const NP = ps.length;
+      const seq = w.slice().sort((a, b) => ((a - G.dealer - 1 + NP) % NP) - ((b - G.dealer - 1 + NP) % NP));
+      for (let k = 0, rem = pot.amount - share * w.length; k < rem; k++) won[seq[k]]++;
     });
     won.forEach((v, i) => { ps[i].stack += v; });
+    const NS = ps.length;
+    const allInShow = ps.some(p => !p.folded && p.allIn);
+    const startAt = G.finalAggr >= 0 && !ps[G.finalAggr].folded ? G.finalAggr : (G.dealer + 1) % NS;
+    const forced = new Set();
+    let bestSeen = -1;
+    for (let k = 0; k < NS; k++){
+      const i = (startAt + k) % NS;
+      if (ps[i].folded) continue;
+      if (allInShow || bestSeen < 0 || ps[i].eval >= bestSeen){ forced.add(i); bestSeen = Math.max(bestSeen, ps[i].eval); }
+    }
     ps.forEach((p, i) => {
       if (p.folded) return;
-      p.show = won[i] > 0;
+      p.show = won[i] > 0 || forced.has(i);
       if (i > 0) p.last = p.show ? catName(p.eval) : 'Muck';
+      hlog(p.name + ': ' + (p.show || i === 0 ? p.cards.map(cardTxt).join(' ') + ', ' + catName(p.eval) + (p.show ? '' : ' (muck)') : 'mão não revelada (muck)'));
     });
     if (ps[0].show) registerShow();
     const winners = won.map((v, i) => i).filter(i => won[i] > 0);
@@ -1140,6 +1251,7 @@ input[type=range]:disabled{opacity:.3;}
     } else {
       msg = 'Ganhos: ' + winners.map(i => nm(i) + ' +' + fmt(won[i])).join(', ');
     }
+    if (allInShow && ps.filter(p => !p.folded).length > 1) msg += '\nAll-in: as cartas foram reveladas.';
     endHand(msg, won);
   }
 
@@ -1251,7 +1363,7 @@ input[type=range]:disabled{opacity:.3;}
     }
     const toCall = G.currentBet - me.bet;
     const others = G.players.some((p, j) => j !== 0 && !p.folded && !p.allIn);
-    const canRaise = me.stack > toCall && others;
+    const canRaise = me.stack > toCall && others && !me.locked;
     const callLabel = toCall === 0 ? 'Passar' : (toCall >= me.stack ? `Pagar tudo (${fmt(me.stack)})` : `Pagar ${fmt(toCall)}`);
 
     if (ui.raising && canRaise){
@@ -1429,6 +1541,7 @@ input[type=range]:disabled{opacity:.3;}
     if (t.id === 'cPlayers'){ cust.players = +t.value; say(''); return refreshCustom(); }
     if (t.id === 'cDiff'){ cust.diff = t.value; return refreshCustom(); }
     if (t.id === 'cEvery'){ cust.every = +t.value; return; }
+    if (t.id === 'oTheme'){ settings.theme = t.value; LS.set(SETTINGS_KEY, settings); applyTheme(t.value); return; }
     if (t.dataset && t.dataset.bot !== undefined){ cust.bots[+t.dataset.bot] = t.value; }
   });
 
@@ -1438,7 +1551,7 @@ input[type=range]:disabled{opacity:.3;}
     const a = b.dataset.a;
     audio();
 
-    if (a === 'table') return newGame(TABLES[+b.dataset.i]);
+    if (a === 'table') return guardNew(() => newGame(TABLES[+b.dataset.i]));
     if (a === 'custom'){ say(''); refreshCustom(); return show('custom'); }
     if (a === 'cback') return show('menu');
     if (a === 'crise'){ cust.rise = !cust.rise; say(''); return refreshCustom(); }
@@ -1451,17 +1564,29 @@ input[type=range]:disabled{opacity:.3;}
       say('');
       return refreshCustom();
     }
-    if (a === 'cplay') return playCustom();
+    if (a === 'cplay'){
+      const r = readCustom();
+      if (r.err) return say(r.err);
+      return guardNew(() => { say(''); newGame(r.cfg); });
+    }
     if (a === 'csave') return savePreset();
     if (a === 'cdel') return deletePreset();
     if (a === 'stats'){ renderStats(); return show('stats'); }
     if (a === 'ach'){ renderAch(); return show('ach'); }
     if (a === 'opts'){ ui.confirmReset = false; renderOpts(); return show('opts'); }
     if (a === 'mback'){ ui.confirmReset = false; return show('menu'); }
+    if (a === 'help') return show('help');
+    if (a === 'mno'){ $('modal').hidden = true; ui.pendingStart = null; return; }
+    if (a === 'myes'){ $('modal').hidden = true; const fn = ui.pendingStart; ui.pendingStart = null; if (fn) fn(); return; }
+    if (a === 'ospeed'){
+      const o = ['lenta', 'normal', 'rapida'];
+      settings.speed = o[(o.indexOf(settings.speed) + 1) % o.length];
+      LS.set(SETTINGS_KEY, settings);
+      return renderOpts();
+    }
     if (a === 'resume') return resumeGame();
     if (a === 'osound'){ settings.sound = !settings.sound; LS.set(SETTINGS_KEY, settings); renderOpts(); if (settings.sound) sfx.chip(); return; }
     if (a === 'otrain'){ settings.practice = !settings.practice; LS.set(SETTINGS_KEY, settings); return renderOpts(); }
-    if (a === 'ovib'){ settings.vibrate = !settings.vibrate; LS.set(SETTINGS_KEY, settings); renderOpts(); if (settings.vibrate) vib(40); return; }
     if (a === 'oreset'){
       if (!ui.confirmReset){ ui.confirmReset = true; return renderOpts(); }
       ST = defStats(); LS.set(STATS_KEY, ST); ui.confirmReset = false; return renderOpts();
@@ -1471,6 +1596,8 @@ input[type=range]:disabled{opacity:.3;}
       G = null; ui.exiting = false; show('menu'); return;
     }
     if (!G) return;
+    if (a === 'hist'){ renderHist(); $('hist').hidden = false; return; }
+    if (a === 'hclose'){ $('hist').hidden = true; return; }
     if (a === 'exit'){ ui.exiting = true; return renderActions(); }
     if (a === 'stay'){ ui.exiting = false; return renderActions(); }
     if (a === 'again') return newGame(G.t);
