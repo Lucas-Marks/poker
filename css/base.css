@@ -1,0 +1,23 @@
+/* Base: reset, tipografia, botões e caixas */
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:inherit;}
+[hidden]{display:none!important;}
+html,body{
+  height:100%;margin:0;background:var(--bg);color:var(--fg);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-user-select:none;user-select:none;
+  overscroll-behavior:none;touch-action:manipulation;
+}
+body{background:radial-gradient(130% 90% at 50% 30%, var(--bg2), var(--bg));}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
+button:focus-visible{outline:2px solid var(--fg);outline-offset:-4px;}
+.dim{color:var(--dim);}
+.c-facil{color:var(--green);}
+.c-medio{color:var(--yellow);}
+.c-dificil{color:var(--red);}
+.screen{height:100%;max-width:480px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.screen>*{flex:none;}
+.screen>:first-child{margin-top:auto;}
+.screen>:last-child{margin-bottom:auto;}

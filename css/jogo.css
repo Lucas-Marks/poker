@@ -1,0 +1,105 @@
+/* Mesa de jogo: cartas, animações, ações, histórico e confirmação */
+/* Jogo */
+#game{gap:12px;overflow-y:auto;}
+#game>*{flex:none;}
+.top{display:flex;justify-content:space-between;align-items:center;font-size:15px;}
+.top .left{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;justify-content:flex-end;}
+.top .link{padding:12px 16px 12px 0;}
+.opps{display:grid;grid-template-columns:repeat(var(--c,3),minmax(0,1fr));gap:8px;}
+.opp{min-width:0;border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--panel);}
+.opp.turn,.opp.win,.me.win{border-color:var(--fg);}
+.opp.fold{opacity:.4;}
+.oname{font-size:14px;color:var(--dim);}
+.oper{font-size:11px;color:var(--dim);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ostack{font-size:18px;margin-top:2px;}
+.ocards{display:flex;gap:3px;height:36px;margin-top:8px;}
+.olast{font-size:12px;color:var(--dim);margin-top:6px;min-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.opps.dense .opp{padding:6px 8px;}
+.opps.dense .ostack{font-size:16px;}
+.opps.dense .ocards{height:auto;margin-top:5px;}
+.opps.dense .olast{margin-top:4px;font-size:11px;}
+.opps.dense .card.sm{width:22px;}
+.opps.dense .card.sm b{font-size:10px;}
+.opps.dense .card.sm i{font-size:9px;}
+.dealer{display:inline-grid;place-items:center;width:16px;height:16px;border:1px solid var(--fg);border-radius:50%;font-size:10px;margin-left:6px;color:var(--fg);vertical-align:1px;}
+#game .center{flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;}
+.meta{display:flex;justify-content:space-between;width:100%;font-size:15px;color:var(--dim);}
+.meta #pot{color:var(--fg);}
+.board{display:flex;gap:6px;}
+.msg{min-height:22px;font-size:16px;text-align:center;white-space:pre-line;}
+.me{border:1px solid var(--line);border-radius:6px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--panel);}
+.me .mrow{display:flex;justify-content:space-between;align-items:baseline;width:100%;}
+.me .mrow .ostack{margin:0;}
+.mcards{display:flex;gap:10px;}
+.me.fold .mcards{opacity:.4;}
+.hn{min-height:18px;font-size:14px;color:var(--dim);}
+
+/* Ajuda, histórico e confirmação */
+.row.g2{grid-template-columns:1fr 1fr;grid-auto-flow:row;}
+.box .row.g2>button{border-left:0;}
+.box .row.g2>button:nth-child(2n){border-left:1px solid var(--line);}
+.box .row.g2>button:nth-child(n+3){border-top:1px solid var(--line);}
+.top .lefts{display:flex;gap:16px;}
+.ad2{font-size:12px;color:var(--dim);text-align:right;}
+.hp{padding:12px 18px;font-size:14px;line-height:1.45;color:var(--dim);}
+.hp b{color:var(--fg);font-weight:500;}
+.overlay{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.86);display:flex;align-items:center;justify-content:center;padding:16px;}
+.mbox{width:100%;max-width:420px;background:var(--bg);}
+#hist{background:var(--bg);align-items:stretch;padding:0;}
+.hbox{width:100%;max-width:480px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:16px;height:100%;padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));}
+#hist .head h1{font-size:34px;margin:0;}
+.hbody{flex:1;min-height:0;overflow-y:auto;font-size:14px;}
+.hh{padding:10px 0;border-top:1px solid var(--line);}
+.hn2{color:var(--dim);font-size:12px;margin-bottom:4px;}
+.hl{padding:1px 0;}
+
+/* Animações simples */
+@keyframes deal{from{opacity:0;transform:translateY(-26px) rotate(-6deg) scale(.82);}to{opacity:1;transform:none;}}
+@keyframes fade{from{opacity:0;}to{opacity:1;}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(var(--glow),.6);}100%{box-shadow:0 0 0 14px rgba(var(--glow),0);}}
+@keyframes turn{0%,100%{border-color:var(--fg);}50%{border-color:var(--dim);}}
+@keyframes pop{0%{transform:scale(1);}40%{transform:scale(1.18);}100%{transform:scale(1);}}
+.card.new{animation:deal .38s cubic-bezier(.2,.8,.3,1) both;}
+.opp.win,.me.win{animation:pulse .9s ease-out 2;}
+.opp.turn{animation:turn 1.2s ease-in-out infinite;}
+.olast.chg{animation:fade .35s ease-out both;}
+#pot.pop{animation:pop .35s ease-out;}
+#msg.fadein{animation:fade .45s ease-out;}
+/* Com "reduzir movimento" ligado no aparelho, só um fade suave (sem deslocamento nem piscar) */
+@media (prefers-reduced-motion:reduce){
+  .card.new{animation:fade .25s ease-out both;}
+  .opp.turn{animation:none;}
+  #pot.pop{animation:none;}
+}
+
+/* Cartas */
+.card{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--card-line);border-radius:5px;aspect-ratio:5/7;line-height:1;background:var(--card-bg);color:var(--card-fg);}
+.card b{font-weight:500;}
+.card i{font-style:normal;}
+.card.red{color:var(--card-red);}
+.card.back{border-color:var(--back);background:var(--back-bg);}
+.card.empty{border:1px dashed var(--empty);background:transparent;}
+.card.sm{width:26px;}.card.sm b{font-size:12px;}.card.sm i{font-size:10px;}
+.card.md{width:min(54px,15vw);}.card.md b{font-size:20px;}.card.md i{font-size:18px;margin-top:3px;}
+.card.lg{width:64px;}.card.lg b{font-size:28px;}.card.lg i{font-size:24px;margin-top:4px;}
+
+/* Ações */
+.actions{margin-top:0;}
+.note{padding:18px 16px;text-align:center;color:var(--dim);font-size:15px;}
+.rz{padding:12px 16px 4px;}
+.rz-top{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;}
+.rz-top strong{font-size:26px;font-weight:400;}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;margin:0;background:transparent;}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--fg);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--fg);margin-top:-11px;border:0;}
+input[type=range]::-moz-range-track{height:1px;background:var(--fg);}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--fg);border:0;}
+input[type=range]:disabled{opacity:.3;}
+@media (max-height:700px){
+  .card.lg{width:54px;}
+  .card.md{width:min(46px,13vw);}
+  #game{gap:8px;}
+  #game .center{gap:8px;}
+  .me{padding:8px;gap:6px;}
+  .top .link{padding:8px 16px 8px 0;}
+}

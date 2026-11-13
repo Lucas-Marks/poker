@@ -1,0 +1,16 @@
+/* Temas: todas as cores do jogo vêm destas variáveis */
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+/* Temas: tudo usa estas variáveis */
+:root,[data-theme="escuro"]{--bg:#000;--bg2:#000;--fg:#fff;--dim:#8c8c8c;--line:#2e2e2e;--inv:#000;--panel:transparent;--card-bg:transparent;--card-fg:#fff;--card-red:#ff5c5c;--card-line:#fff;--back:#444;--back-bg:transparent;--empty:#333;--red:#ff5c5c;--green:#3ddc84;--yellow:#ffd23f;--glow:255,255,255;color-scheme:dark;}
+[data-theme="claro"]{--bg:#fff;--bg2:#fff;--fg:#000;--dim:#6b6b6b;--line:#d9d9d9;--inv:#fff;--panel:transparent;--card-bg:transparent;--card-fg:#000;--card-red:#d32f2f;--card-line:#000;--back:#9a9a9a;--back-bg:transparent;--empty:#c8c8c8;--red:#d32f2f;--green:#12803b;--yellow:#9a7200;--glow:0,0,0;color-scheme:light;}
+/* Mesas clássicas: feltro colorido e cartas brancas */
+[data-theme="verde"],[data-theme="vermelha"],[data-theme="azul"],[data-theme="roxa"],[data-theme="dark"]{--fg:#fff;--dim:rgba(255,255,255,.68);--line:rgba(255,255,255,.24);--panel:rgba(0,0,0,.22);--card-bg:#fdfdfb;--card-fg:#141414;--card-red:#c62828;--card-line:rgba(0,0,0,.35);--back-bg:rgba(0,0,0,.35);--back:rgba(255,255,255,.5);--empty:rgba(255,255,255,.28);--red:#ff9a8f;--green:#8dffb0;--yellow:#ffe27a;--glow:255,255,255;color-scheme:dark;}
+[data-theme="verde"]{--bg:#0b5d34;--bg2:#13804a;--inv:#0b5d34;}
+[data-theme="vermelha"]{--bg:#6e101d;--bg2:#98202f;--inv:#6e101d;}
+[data-theme="azul"]{--bg:#0f3566;--bg2:#1a5aa1;--inv:#0f3566;}
+[data-theme="roxa"]{--bg:#3f1a60;--bg2:#63309a;--inv:#3f1a60;}
+[data-theme="dark"]{--bg:#121617;--bg2:#222a2c;--inv:#121617;--line:rgba(255,255,255,.18);}
